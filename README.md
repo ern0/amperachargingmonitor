@@ -33,6 +33,7 @@ The car led blinks quickly, it's not enough to make a still image and analyze it
 - Configure your DHCP server (usually, it's your router) to assign static IP address
 - Install *ffmpeg* by *sudo apt install -y ffmpeg*
 - Plug the cam, it should appear as */dev/video0*
+- Create a RAM disk avoid using SD card frequently, create a directory */mnt/ram*, then in */etc/fstab* add *tmpfs /mnt/ram tmpfs*
 - Install this stuff
 
 ### Webcam
