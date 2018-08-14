@@ -1,3 +1,3 @@
 #!/bin/bash
 
-./findgreendot.py s sample/dark-blink.avi
+./findgreendot.py sample/dark-blink.avi
