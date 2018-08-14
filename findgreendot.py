@@ -24,7 +24,7 @@ class FindGreenDot:
 		
 		while True:
 			
-			self.extractFrame(4)
+			self.extractFrame(40)
 			self.procImage()
 			break;
 
@@ -94,7 +94,17 @@ class FindGreenDot:
 		image = Image.open(self.mkTmpImgPath())
 		pixels = image.load()
 		
-		print(pixels[4,4])		
+		(width,height) = image.size
+		
+		for x in range(0,width):
+			for y in range(0,height):
+				
+				(r,g,b) = pixels[x,y]
+
+				if g < 50: continue
+				if g < 50: continue
+				
+				print(x,y,g)	
 		
 
 if __name__ == '__main__':
