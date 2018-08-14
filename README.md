@@ -36,6 +36,8 @@ The car led blinks quickly, it's not enough to make a still image and analyze it
 - Create a RAM disk avoid using SD card frequently, create a directory */mnt/ram*, then in */etc/fstab* add *tmpfs /mnt/ram tmpfs*
 - Install this stuff
 
+- sudo apt install python3-pil
+
 ### Webcam
 
 You can use a real webcam, but the cheapest solution s to use some old Android device for it:

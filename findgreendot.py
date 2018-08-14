@@ -4,20 +4,46 @@ import sys
 sys.dont_write_bytecode = True
 import os
 
+from PIL import Image
+
 
 class FindGreenDot:
 	
 	
-	def find(self,fnam):
+	def main(self):		
 		
+		try: tmpdir = sys.argv[2]
+		except: tmpdir = None
+		self.checkTmpDir(tmpdir)
+		
+		try: fnam = sys.argv[1]
+		except: fnam = None
 		self.checkFileExistence(fnam)
-		self.countNumberOfFrames()
+		
+		self.frameCount = self.countNumberOfFrames()
+		
+		while True:
+			
+			self.extractFrame(4)
+			self.procImage()
+			break;
 
 
 	def fatal(self,msg):
 		sys.stderr.write("ERROR: " + str(msg) + "\n")
 		os._exit(1)
 
+
+	def checkTmpDir(self,tmpdir):
+		
+		self.tmpdir = "/tmp"
+			
+		if tmpdir is None: return
+		if tmpdir == "": return
+		if not os.path.isdir(tmpdir): return
+			
+		self.tmpdir = tmpdir
+		
 
 	def checkFileExistence(self,fnam):
 		
@@ -27,6 +53,10 @@ class FindGreenDot:
 		self.fnam = fnam
 		
 		
+	def mkTmpImgPath(self):
+		return self.tmpdir + "/frame.png"		
+		
+	
 	def countNumberOfFrames(self):
 		
 		output = os.popen(
@@ -40,13 +70,36 @@ class FindGreenDot:
 			" " + self.fnam
 		).read()		
 				
-		try: self.frameCount = int(output)
+		try: return int(output)
 		except: self.fatal("ffprobe failed")
 	
+
+	def extractFrame(self,frameNo):
+		
+		try: os.unlink(self.mkTmpImgPath())
+		except: pass
+		
+		output = os.popen(
+			"ffmpeg"
+			" -v error"
+			" -i " + self.fnam +
+			" -vf select=\"eq(n\\," + str(frameNo) + ")\""
+			" -vsync 0"
+			" " + self.mkTmpImgPath()
+		).read()
+		
+		
+	def procImage(self):
+		
+		image = Image.open(self.mkTmpImgPath())
+		pixels = image.load()
+		
+		print(pixels[4,4])		
+		
 
 if __name__ == '__main__':
 
 	try: 
-		(FindGreenDot()).find(sys.argv[1])
+		(FindGreenDot()).main()
 	except KeyboardInterrupt:
 		print(" - interrupted")
