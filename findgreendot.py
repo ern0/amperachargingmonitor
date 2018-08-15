@@ -19,9 +19,15 @@ class FindGreenDot:
 		try: fnam = sys.argv[1]
 		except: fnam = None
 		self.checkFileExistence(fnam)
+
+		try: 
+			dummy = sys.argv[3]
+			self.showProgress = True
+		except:
+			self.showProgress = False
 		
 		self.frameCount = self.countNumberOfFrames()
-		self.countStrokes()
+		self.procFrames()
 	
 
 	def fatal(self,msg):
@@ -49,7 +55,12 @@ class FindGreenDot:
 		
 		
 	def mkTmpImgPath(self):
-		return self.tmpdir + "/frame.png"		
+		return (
+			self.tmpdir
+			+ "/" 
+			+ os.path.basename(self.fnam)
+			+ "-frame.png"
+		)		
 		
 	
 	def countNumberOfFrames(self):
@@ -118,16 +129,19 @@ class FindGreenDot:
 		return found
 
 
-	def countStrokes(self):
+	def procFrames(self):
 		
+		print(self.fnam)
+
 		strokeType = -1		 	
 		strokeCount = [0,0]
 		strokeLength = [0,0]
 				
 		for i in range(0,self.frameCount):
 			
-			print("Frame",i,"/",self.frameCount)
-			
+			if self.showProgress:
+				print(" frame",i,"/",self.frameCount)
+
 			self.extractFrame(i)
 			found = self.procImage()
 			if found: value = 1
@@ -143,7 +157,7 @@ class FindGreenDot:
 			if strokeCount[i] == 0: continue
 			strokeLength[i] = strokeLength[i] / strokeCount[i]
 			
-		print(strokeCount,strokeLength)
+		print(self.fnam,strokeCount,strokeLength)
 
 
 if __name__ == '__main__':
