@@ -11,8 +11,6 @@ class FindGreenDot:
 	
 	
 	def main(self):		
-
-		self.saveImage = False
 		
 		try: tmpdir = sys.argv[2]
 		except: tmpdir = None
@@ -28,17 +26,21 @@ class FindGreenDot:
 		except:
 			self.showProgress = False
 
+		self.saveImage = self.showProgress
+
 		self.frameCount = self.countNumberOfFrames()
 
 		if False: ############## set to False pls
 			#for i in range(0,self.frameCount):
-			for i in (6,):
+			for i in (5,):
 				print(self.fnam + ":" + str(i),end=" - ")
 				self.extractFrame(i)
 				found = self.procImage()
+				print(found)
 			quit()
 		
 		self.procFrames()
+		self.saveImage = False
 	
 
 	def fatal(self,msg):
@@ -159,7 +161,8 @@ class FindGreenDot:
 
 	def procFrames(self):
 		
-		print(self.fnam)
+		if self.showProgress: 
+			print(self.fnam)
 
 		valueCount = [0,0]
 				
