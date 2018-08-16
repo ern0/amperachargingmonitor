@@ -11,6 +11,8 @@ class FindGreenDot:
 	
 	
 	def main(self):		
+
+		self.saveImage = False
 		
 		try: tmpdir = sys.argv[2]
 		except: tmpdir = None
@@ -28,13 +30,12 @@ class FindGreenDot:
 
 		self.frameCount = self.countNumberOfFrames()
 
-		if True: ############## set to False pls
+		if False: ############## set to False pls
 			#for i in range(0,self.frameCount):
-			for i in (0,1):
+			for i in (6,):
 				print(self.fnam + ":" + str(i),end=" - ")
 				self.extractFrame(i)
 				found = self.procImage()
-
 			quit()
 		
 		self.procFrames()
@@ -111,48 +112,48 @@ class FindGreenDot:
 		(width,height) = source.size
 		pixels = source.load()
 
-		target = Image.new("RGB",source.size,"black")
+		target = Image.new(
+			"RGB",
+			(width * 2 + 1, height),
+			"black"
+		)
 		result = target.load()
 
-		for y in range(0,height):
-			for x in range(0,width - 1):
-
-				(r,g,b) = pixels[x,y]
-				if r < 20: continue
-				if g < 20: continue
-				if b < 20: continue
-
-				(r1,g1,b1) = pixels[x + 1,y]
-				d = abs(g - g1) * 3
-				d -= abs(r - r1)
-				d -= int( abs(b - b1) / 2 )
-				result[x,y] = (d,d,d)
-
-		threshold = 0
-		for y in range(0,height):
-			for x in range(0,width - 1):
-
-				(d1,d2,d3) = result[x,y]
-				if d1 > threshold: threshold = d1
-
-		threshold *= 0.8
-
-		for y in range(0,height):
-			count = 0
-			for x in range(0,width - 1):
-
-				(d1,d2,d3) = result[x,y]
-				if d1 > threshold: 
-					result[x,y] = (255,255,255)
-					count += 1
-
-			if count > 0: 
-				print(y,count)
-
-		source.save("/tmp/image.png","PNG")
-		target.save("/tmp/result.png","PNG")
+		# copy source and draw separator
+		if self.saveImage:
+			for y in range(0,height):
+				result[width,y] = (0,255,0)
+				for x in range(0,width):
+					result[x + width + 1, y] = pixels[x,y]
 
 		found = False
+
+		# make sobelish
+		for y in range(0,height):
+			for x in range(0,width - 2):
+
+				(r,g,b) = pixels[x,y]
+				(r1,g1,b1) = pixels[x + 1, y]
+				(r2,g2,b2) = pixels[x + 2, y]
+
+				delta = (
+					abs(r - r1) + abs(g - g1) * 2 + abs(b - b1) +
+					abs(r - r2) + abs(g - g2)	+ abs(b - b2)
+				)				
+				if g < r: delta = 0
+				elif g < b: delta = 0
+				elif abs(r - b) > g / 5: delta = 0
+				elif delta < 256 * 4: delta = 0
+
+				if delta != 0: found = True
+
+				if self.saveImage:
+					if delta > 255: delta = 255
+					result[x,y] = (delta,delta,delta)
+
+		if self.saveImage:
+			target.save("/tmp/image.png","PNG")
+
 		return found
 
 
@@ -160,32 +161,21 @@ class FindGreenDot:
 		
 		print(self.fnam)
 
-		strokeType = -1		 	
-		strokeCount = [0,0]
-		strokeLength = [0,0]
+		valueCount = [0,0]
 				
 		for i in range(0,self.frameCount):
 			
-			if self.showProgress:
-				print(" frame",i,"/",self.frameCount)
-
 			self.extractFrame(i)
 			found = self.procImage()
 
 			if found: value = 1
 			else: value = 0
-			
-			if strokeType != value:
-				strokeType = value				
-				strokeCount[strokeType] += 1
-			
-			strokeLength[strokeType] += 1
+			valueCount[value] += 1
+
+			if self.showProgress:
+				print(" frame",i,"/",self.frameCount," - ",value)
 				
-		for i in range(0,1):
-			if strokeCount[i] == 0: continue
-			strokeLength[i] = strokeLength[i] / strokeCount[i]
-			
-		print(self.fnam,strokeCount,strokeLength)
+		print(self.fnam,valueCount)
 
 
 if __name__ == '__main__':
