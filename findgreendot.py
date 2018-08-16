@@ -25,8 +25,18 @@ class FindGreenDot:
 			self.showProgress = True
 		except:
 			self.showProgress = False
-		
+
 		self.frameCount = self.countNumberOfFrames()
+
+		if True: ############## set to False pls
+			#for i in range(0,self.frameCount):
+			for i in (0,1):
+				print(self.fnam + ":" + str(i),end=" - ")
+				self.extractFrame(i)
+				found = self.procImage()
+
+			quit()
+		
 		self.procFrames()
 	
 
@@ -97,35 +107,52 @@ class FindGreenDot:
 		
 	def procImage(self):
 		
-		image = Image.open(self.mkTmpImgPath())
-		pixels = image.load()
-		(width,height) = image.size
+		source = Image.open(self.mkTmpImgPath())
+		(width,height) = source.size
+		pixels = source.load()
 
-		deltaRMax = 0
-		deltaBMax = 0
-		
+		target = Image.new("RGB",source.size,"black")
+		result = target.load()
+
 		for y in range(0,height):
-			for x in range(0,width):				
+			for x in range(0,width - 1):
 
 				(r,g,b) = pixels[x,y]
-				deltaR = g - r
-				deltaB = g - b
-				
-				if deltaR > deltaRMax: deltaRMax = deltaR			
-				if deltaB > deltaBMax: deltaBMax = deltaB
-						
-		found = 0
-		
-		for y in range(0,height):
-			for x in range(0,width):				
+				if r < 20: continue
+				if g < 20: continue
+				if b < 20: continue
 
-				(r,g,b) = pixels[x,y]
-				deltaR = g - r
-				deltaB = g - b
-				
-				if deltaR > deltaRMax / 2: found += 1
-				if deltaB > deltaBMax / 2: found += 1
-		
+				(r1,g1,b1) = pixels[x + 1,y]
+				d = abs(g - g1) * 3
+				d -= abs(r - r1)
+				d -= int( abs(b - b1) / 2 )
+				result[x,y] = (d,d,d)
+
+		threshold = 0
+		for y in range(0,height):
+			for x in range(0,width - 1):
+
+				(d1,d2,d3) = result[x,y]
+				if d1 > threshold: threshold = d1
+
+		threshold *= 0.8
+
+		for y in range(0,height):
+			count = 0
+			for x in range(0,width - 1):
+
+				(d1,d2,d3) = result[x,y]
+				if d1 > threshold: 
+					result[x,y] = (255,255,255)
+					count += 1
+
+			if count > 0: 
+				print(y,count)
+
+		source.save("/tmp/image.png","PNG")
+		target.save("/tmp/result.png","PNG")
+
+		found = False
 		return found
 
 
@@ -144,6 +171,7 @@ class FindGreenDot:
 
 			self.extractFrame(i)
 			found = self.procImage()
+
 			if found: value = 1
 			else: value = 0
 			
