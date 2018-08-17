@@ -31,8 +31,8 @@ class FindGreenDot:
 		self.frameCount = self.countNumberOfFrames()
 
 		if False: ############## set to False pls
-			#for i in range(0,self.frameCount):
-			for i in (5,):
+			for i in range(0,self.frameCount):
+			#for i in (0,):
 				print(self.fnam + ":" + str(i),end=" - ")
 				self.extractFrame(i)
 				found = self.procImage()
@@ -139,13 +139,12 @@ class FindGreenDot:
 				(r2,g2,b2) = pixels[x + 2, y]
 
 				delta = (
-					abs(r - r1) + abs(g - g1) * 2 + abs(b - b1) +
-					abs(r - r2) + abs(g - g2)	+ abs(b - b2)
+					abs(r - r1) + abs(g - g1) * 3 + abs(b - b1) +
+					abs(r - r2) + abs(g - g2)	* 2 + abs(b - b2)
 				)				
 				if g < r: delta = 0
 				elif g < b: delta = 0
-				elif abs(r - b) > g / 5: delta = 0
-				elif delta < 256 * 4: delta = 0
+				elif delta < 256 * 5: delta = 0
 
 				if delta != 0: found = True
 
