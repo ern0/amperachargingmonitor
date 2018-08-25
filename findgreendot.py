@@ -12,71 +12,46 @@ class FindGreenDot:
 	
 	def main(self):		
 		
-		try: tmpdir = sys.argv[2]
-		except: tmpdir = None
-		self.checkTmpDir(tmpdir)
-		
 		try: fnam = sys.argv[1]
-		except: fnam = None
+		except: self.fatal("filename must be specified")
 		self.checkFileExistence(fnam)
 
-		try: 
-			dummy = sys.argv[3]
-			self.showProgress = True
-		except:
-			self.showProgress = False
+		try: specifiedFrame = sys.argv[2]
+		except: specifiedFrame = None
 
-		self.saveImage = self.showProgress
+		result = self.procFrames(fnam,specifiedFrame)
+		print(result)
 
-		self.frameCount = self.countNumberOfFrames()
 
-		if False: ############## set to False pls
-			for i in range(0,self.frameCount):
-			#for i in (0,):
-				print(self.fnam + ":" + str(i),end=" - ")
-				self.extractFrame(i)
-				found = self.procImage()
-				print(found)
-			quit()
-		
-		self.procFrames()
-		self.saveImage = False
-	
+	def __init__(self):
+
+		if os.path.isdir("/mnt/ram"): 
+			self.tmpdir = "/mnt/ram"
+		else:
+			self.tmpdir = "/tmp"
+
 
 	def fatal(self,msg):
 		sys.stderr.write("ERROR: " + str(msg) + "\n")
 		os._exit(1)
 
 
-	def checkTmpDir(self,tmpdir):
-		
-		self.tmpdir = "/tmp"
-			
-		if tmpdir is None: return
-		if tmpdir == "": return
-		if not os.path.isdir(tmpdir): return
-			
-		self.tmpdir = tmpdir
-		
-
 	def checkFileExistence(self,fnam):
 		
 		if not os.path.isfile(fnam): 
 			self.fatal("file not found: " + str(fnam))
-			
-		self.fnam = fnam
+					
 		
-		
-	def mkTmpImgPath(self):
+	def mkTmpImgPath(self,fnam):
 		return (
 			self.tmpdir
 			+ "/" 
-			+ os.path.basename(self.fnam)
+			+ os.path.basename(fnam)
 			+ "-frame.png"
 		)		
 		
 	
-	def countNumberOfFrames(self):
+	def countNumberOfFrames(self,fnam):
 		
 		output = os.popen(
 			"ffprobe "
@@ -86,31 +61,31 @@ class FindGreenDot:
 			" -show_entries"
 			" stream=nb_frames"
 			" -of default=nokey=1:noprint_wrappers=1"
-			" " + self.fnam
+			" " + fnam
 		).read()		
 				
 		try: return int(output)
 		except: self.fatal("ffprobe failed")
 	
 
-	def extractFrame(self,frameNo):
+	def extractFrame(self,fnam,frameNo):
 		
-		try: os.unlink(self.mkTmpImgPath())
+		try: os.unlink(self.mkTmpImgPath(fnam))
 		except: pass
 		
 		output = os.popen(
 			"ffmpeg"
 			" -v error"
-			" -i " + self.fnam +
+			" -i " + fnam +
 			" -vf select=\"eq(n\\," + str(frameNo) + ")\""
 			" -vsync 0"
-			" " + self.mkTmpImgPath()
+			" " + self.mkTmpImgPath(fnam)
 		).read()
 		
 		
-	def procImage(self):
+	def procImage(self,fnam):
 		
-		source = Image.open(self.mkTmpImgPath())
+		source = Image.open(self.mkTmpImgPath(fnam))
 		(width,height) = source.size
 		pixels = source.load()
 
@@ -158,26 +133,50 @@ class FindGreenDot:
 		return found
 
 
-	def procFrames(self):
-		
-		if self.showProgress: 
-			print(self.fnam)
+	def procFrames(self,fnam,specifiedFrame = None):
 
-		valueCount = [0,0]
-				
-		for i in range(0,self.frameCount):
+		frameCount = self.countNumberOfFrames(fnam)
+
+		if specifiedFrame is None:
+			frameRange = range(0,frameCount)
+			self.saveImage = False
+		else:
+			frameRange = [ specifiedFrame, ]
+			self.saveImage = True
+
+		valueCount = [0,0]				
+		for i in frameRange:
 			
-			self.extractFrame(i)
-			found = self.procImage()
-
+			self.extractFrame(fnam,i)
+			found = self.procImage(fnam)
 			if found: value = 1
 			else: value = 0
+
 			valueCount[value] += 1
 
-			if self.showProgress:
-				print(" frame",i,"/",self.frameCount," - ",value)
-				
-		print(self.fnam,valueCount)
+			sys.stderr.write(
+				fnam 
+				+ ":" 
+				+ str(i) 
+				+ " - " 
+				+ str(value)
+				+ "\n"
+			)
+			sys.stderr.flush()
+
+		sys.stderr.write(
+			" dark="
+			+ str(valueCount[0])
+			+ " light="
+			+ str(valueCount[1])
+			+ "\n"
+		)
+		sys.stderr.flush()
+
+		if valueCount[0] == 0: return 1
+		if valueCount[1] == 0: return 0
+		if valueCount[0] > valueCount[1]: return 2
+		return 0
 
 
 if __name__ == '__main__':

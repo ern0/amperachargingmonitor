@@ -1,6 +1,5 @@
 #!/bin/bash
 clear
 
-#./findgreendot.py sample/morning-none-1.avi /tmp show_progress
-./findgreendot.py sample/morning-blink-1.avi /tmp show_progress
+./findgreendot.py sample/sunshine-light-1.avi 3
 open /tmp/image.png
