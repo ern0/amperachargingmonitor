@@ -107,25 +107,31 @@ class FindGreenDot:
 
 		# make sobelish
 		for y in range(0,height):
-			for x in range(0,width - 2):
+			for x in range(2,width - 4):
 
-				(r,g,b) = pixels[x,y]
-				(r1,g1,b1) = pixels[x + 1, y]
-				(r2,g2,b2) = pixels[x + 2, y]
+				(r0,g0,b0) = pixels[x,y]
+				(r1,g1,b1) = pixels[x + 2, y]
 
-				delta = (
-					abs(r - r1) + abs(g - g1) * 3 + abs(b - b1) +
-					abs(r - r2) + abs(g - g2)	* 2 + abs(b - b2)
-				)				
-				if g < r: delta = 0
-				elif g < b: delta = 0
-				elif delta < 256 * 5: delta = 0
+				green = True
 
-				if delta != 0: found += 1
+				edge = (
+					4 * abs(g0 - g1) 
+					+ abs(r0 - r1)
+					+ abs(g0 - g1)
+				)
+
+				if edge < 256 * 4: green = False
+				if r0 > g0: green = False
+				if b0 > g0: green = False
+
+				if green: found += 1
 
 				if self.saveImage:
-					if delta != 0: delta = 255
-					result[x,y] = (delta,delta,delta)
+					if green: color = 255
+					else: color = 0
+					result[x,y] = (color,color,color)
+
+		if found == 1: found = 0
 
 		if self.saveImage:
 			target.save("/tmp/image.png","PNG")
@@ -157,7 +163,7 @@ class FindGreenDot:
 			sys.stderr.write(
 				fnam 
 				+ ":" 
-				+ str(i)
+				+ str.zfill(str(i),3)
 				+ " "
 			)
 
