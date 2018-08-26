@@ -103,7 +103,7 @@ class FindGreenDot:
 				for x in range(0,width):
 					result[x + width + 1, y] = pixels[x,y]
 
-		found = False
+		found = 0
 
 		# make sobelish
 		for y in range(0,height):
@@ -121,10 +121,10 @@ class FindGreenDot:
 				elif g < b: delta = 0
 				elif delta < 256 * 5: delta = 0
 
-				if delta != 0: found = True
+				if delta != 0: found += 1
 
 				if self.saveImage:
-					if delta > 255: delta = 255
+					if delta != 0: delta = 255
 					result[x,y] = (delta,delta,delta)
 
 		if self.saveImage:
@@ -149,7 +149,7 @@ class FindGreenDot:
 			
 			self.extractFrame(fnam,i)
 			found = self.procImage(fnam)
-			if found: value = 1
+			if found > 0: value = 1
 			else: value = 0
 
 			valueCount[value] += 1
@@ -157,11 +157,19 @@ class FindGreenDot:
 			sys.stderr.write(
 				fnam 
 				+ ":" 
-				+ str(i) 
-				+ " - " 
-				+ str(value)
+				+ str(i)
+				+ " "
+			)
+
+			for i in range(0,found):
+				sys.stderr.write("#") 
+
+			sys.stderr.write(
+				" " 
+				+ str(found)
 				+ "\n"
 			)
+
 			sys.stderr.flush()
 
 		sys.stderr.write(
