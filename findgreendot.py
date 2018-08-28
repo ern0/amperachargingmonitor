@@ -8,10 +8,10 @@ from PIL import Image
 
 
 class FindGreenDot:
-	
-	
-	def main(self):		
-		
+
+
+	def main(self):
+
 		try: fnam = sys.argv[1]
 		except: self.fatal("filename must be specified")
 		self.checkFileExistence(fnam)
@@ -25,7 +25,7 @@ class FindGreenDot:
 
 	def __init__(self):
 
-		if os.path.isdir("/mnt/ram"): 
+		if os.path.isdir("/mnt/ram"):
 			self.tmpdir = "/mnt/ram"
 		else:
 			self.tmpdir = "/tmp"
@@ -37,22 +37,22 @@ class FindGreenDot:
 
 
 	def checkFileExistence(self,fnam):
-		
-		if not os.path.isfile(fnam): 
+
+		if not os.path.isfile(fnam):
 			self.fatal("file not found: " + str(fnam))
-					
-		
+
+
 	def mkTmpImgPath(self,fnam):
 		return (
 			self.tmpdir
-			+ "/" 
+			+ "/"
 			+ os.path.basename(fnam)
 			+ "-frame.png"
-		)		
-		
-	
+		)
+
+
 	def countNumberOfFrames(self,fnam):
-		
+
 		output = os.popen(
 			"ffprobe "
 			" -v error"
@@ -62,17 +62,17 @@ class FindGreenDot:
 			" stream=nb_frames"
 			" -of default=nokey=1:noprint_wrappers=1"
 			" " + fnam
-		).read()		
-				
+		).read()
+
 		try: return int(output)
 		except: self.fatal("ffprobe failed")
-	
+
 
 	def extractFrame(self,fnam,frameNo):
-		
+
 		try: os.unlink(self.mkTmpImgPath(fnam))
 		except: pass
-		
+
 		output = os.popen(
 			"ffmpeg"
 			" -v error"
@@ -81,10 +81,10 @@ class FindGreenDot:
 			" -vsync 0"
 			" " + self.mkTmpImgPath(fnam)
 		).read()
-		
-		
+
+
 	def procImage(self,fnam):
-		
+
 		source = Image.open(self.mkTmpImgPath(fnam))
 		(width,height) = source.size
 		pixels = source.load()
@@ -104,34 +104,41 @@ class FindGreenDot:
 					result[x + width + 1, y] = pixels[x,y]
 
 		found = 0
-
-		# make sobelish
 		for y in range(0,height):
-			for x in range(2,width - 4):
+			line = {}
+			for x in range(4,width - 4):
 
 				(r0,g0,b0) = pixels[x,y]
 				(r1,g1,b1) = pixels[x + 2, y]
 
-				green = True
+				suspect = True
 
-				edge = (
-					4 * abs(g0 - g1) 
-					+ abs(r0 - r1)
-					+ abs(g0 - g1)
-				)
+				# minimalistic sobel matrix
+				edge = abs(g0 - g1)
+				if edge < 180: suspect = False
 
-				if edge < 256 * 4: green = False
-				if r0 > g0: green = False
-				if b0 > g0: green = False
+				# the lamp is green
+				if r0 > g0: suspect = False
+				if b0 > g0: suspect = False
 
-				if green: found += 1
+				line[x] = suspect
+
+				confirmed = False
+
+				if suspect:
+					thickness = 0
+					for i in range(1,4):
+						if line[x - i]: thickness += 1
+					if thickness > 0: confirmed = True
+
+				if confirmed: found += 1
 
 				if self.saveImage:
-					if green: color = 255
-					else: color = 0
-					result[x,y] = (color,color,color)
+					if confirmed: result[x,y] = (0x30,0xff,0x30)
+					elif suspect: result[x,y] = (0xff,0,0)
+					else: result[x,y] = (0,0,0)
 
-		if found == 1: found = 0
+		if found < 2: found = 0
 
 		if self.saveImage:
 			target.save("/tmp/image.png","PNG")
@@ -150,9 +157,9 @@ class FindGreenDot:
 			frameRange = [ specifiedFrame, ]
 			self.saveImage = True
 
-		valueCount = [0,0]				
+		valueCount = [0,0]
 		for i in frameRange:
-			
+
 			self.extractFrame(fnam,i)
 			found = self.procImage(fnam)
 			if found > 0: value = 1
@@ -161,17 +168,17 @@ class FindGreenDot:
 			valueCount[value] += 1
 
 			sys.stderr.write(
-				fnam 
-				+ ":" 
+				fnam
+				+ ":"
 				+ str.zfill(str(i),3)
 				+ " "
 			)
 
 			for i in range(0,found):
-				sys.stderr.write("#") 
+				sys.stderr.write("#")
 
 			sys.stderr.write(
-				" " 
+				" "
 				+ str(found)
 				+ "\n"
 			)
@@ -195,7 +202,7 @@ class FindGreenDot:
 
 if __name__ == '__main__':
 
-	try: 
+	try:
 		(FindGreenDot()).main()
 	except KeyboardInterrupt:
 		print(" - interrupted")
