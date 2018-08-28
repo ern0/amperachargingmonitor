@@ -103,65 +103,71 @@ class FindGreenDot:
 				for x in range(0,width):
 					result[x + width + 1, y] = pixels[x,y]
 
-		# select dark or light profile
-		dark = 0
-		light = 0
-		for y in range(0,height):
-			for x in range(0,width):
-				(r0,g0,b0) = pixels[x,y]
-				if r0 + g0 + b0 < 256: dark += 1
-				else: light += 1
+		# make edge image with sobel matrix (green)
 
-		#if light > dark:
-		edgeLimit = 150
-		#else:
-		#	edgeLimit = 180
+		sobel = [
+			[(0,0,0), (0,0,0), (0,0,0)],
+			[(0,0,0), (0,0,0), (0,0,0)],
+			[(0,0,0), (0,0,0), (0,0,0)]
+		]
 
-		# analyze
+		for y in range(1,height - 1):
+			for x in range(1,width - 1):
+
+				sobel[0][0] = pixels[x - 1, y - 1]
+				sobel[0][1] = pixels[x    , y - 1]
+				sobel[0][2] = pixels[x + 1, y - 1]
+
+				sobel[1][0] = pixels[x - 1, y]
+				sobel[1][1] = pixels[x    , y]
+				sobel[1][2] = pixels[x + 1, y]
+
+				sobel[2][0] = pixels[x - 1, y + 1]
+				sobel[2][1] = pixels[x    , y + 1]
+				sobel[2][2] = pixels[x + 1, y + 1]
+
+				colorDiff = [0,0,0]
+				for colorIndex in range(0,2):
+					colorDiff[colorIndex] = (
+						+1 * sobel[0][0][colorIndex] +
+						-1 * sobel[0][2][colorIndex] +
+						+2 * sobel[1][0][colorIndex] +
+						-2 * sobel[1][2][colorIndex] +
+						+1 * sobel[2][0][colorIndex] +
+						-1 * sobel[2][2][colorIndex]
+					)
+
+				d = colorDiff[1]
+				if colorDiff[0] > colorDiff[1]: d = 0
+				if colorDiff[2] > colorDiff[1]: d = 0
+				(r,g,b) = sobel[1][1]
+				if r > g: d = 0
+				if b > g: d = 0
+				if d < 600: d = 0
+
+				result[x,y] = (0,d,0)
+
+		# find and mark large spots (yellow)
+
 		found = 0
-		line = {}
-		for y in range(0,height):
-			lastLine = line
-			line = {}
-			for x in range(4,width - 4):
+		for y in range(1,height - 1):
+			for x in range(1,width - 1):
 
-				(r0,g0,b0) = pixels[x,y]
-				(r1,g1,b1) = pixels[x + 1, y]
-
-				suspect = True
-
-				# minimalistic sobel matrix
-				edge = (
-					2 * abs(g0 - g1) +
-					abs(r0 - r1) +
-					abs(b0 - b1)
-				) / 4
-				if edge < edgeLimit: suspect = False
-
-				# the lamp is green
-				if r0 > g0: suspect = False
-				if b0 > g0: suspect = False
-
-				line[x] = suspect
-
-				confirmed = False
-
-				if suspect:
-					thickness = 0
-					for i in range(1,4):
-						if x - i < 4: continue
-						if line[x - i]: thickness += 1
-						if lastLine[x - i]: thickness += 1
-					if thickness > 0: confirmed = True
-
-				if confirmed: found += 1
-
-				if self.saveImage:
-					if confirmed: result[x,y] = (0x30,0xff,0x30)
-					elif suspect: result[x,y] = (0xff,0,0)
-					else: result[x,y] = (0,0,0)
-
-		if found < 2: found = 0
+				spot = 0
+				if result[x - 1,y - 1][1] > 0: spot += 1
+				if result[x    ,y - 1][1] > 0: spot += 2
+				if result[x + 1,y - 1][1] > 0: spot += 1
+				if result[x - 1,y][1] > 0: spot += 2
+				if result[x    ,y][1] > 0: spot += 3
+				if result[x + 1,y][1] > 0: spot += 2
+				if result[x - 1,y + 1][1] > 0: spot += 1
+				if result[x    ,y + 1][1] > 0: spot += 2
+				if result[x + 1,y + 1][1] > 0: spot += 1
+				
+				if spot > 4: 
+					found += 1
+					if self.saveImage: 
+						result[x,y] = (255,127,127)
 
 		if self.saveImage:
 			target.save("/tmp/image.png","PNG")
@@ -219,6 +225,10 @@ class FindGreenDot:
 
 		if valueCount[0] == 0: return 1
 		if valueCount[1] == 0: return 0
+		
+		total = valueCount[0] + valueCount[1]
+		if valueCount[1] > total * 0.8: return 1
+
 		if valueCount[0] > valueCount[1]: return 2
 		return 0
 
