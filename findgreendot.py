@@ -103,19 +103,40 @@ class FindGreenDot:
 				for x in range(0,width):
 					result[x + width + 1, y] = pixels[x,y]
 
-		found = 0
+		# select dark or light profile
+		dark = 0
+		light = 0
 		for y in range(0,height):
+			for x in range(0,width):
+				(r0,g0,b0) = pixels[x,y]
+				if r0 + g0 + b0 < 256: dark += 1
+				else: light += 1
+
+		#if light > dark:
+		edgeLimit = 150
+		#else:
+		#	edgeLimit = 180
+
+		# analyze
+		found = 0
+		line = {}
+		for y in range(0,height):
+			lastLine = line
 			line = {}
 			for x in range(4,width - 4):
 
 				(r0,g0,b0) = pixels[x,y]
-				(r1,g1,b1) = pixels[x + 2, y]
+				(r1,g1,b1) = pixels[x + 1, y]
 
 				suspect = True
 
 				# minimalistic sobel matrix
-				edge = abs(g0 - g1)
-				if edge < 180: suspect = False
+				edge = (
+					2 * abs(g0 - g1) +
+					abs(r0 - r1) +
+					abs(b0 - b1)
+				) / 4
+				if edge < edgeLimit: suspect = False
 
 				# the lamp is green
 				if r0 > g0: suspect = False
@@ -128,7 +149,9 @@ class FindGreenDot:
 				if suspect:
 					thickness = 0
 					for i in range(1,4):
+						if x - i < 4: continue
 						if line[x - i]: thickness += 1
+						if lastLine[x - i]: thickness += 1
 					if thickness > 0: confirmed = True
 
 				if confirmed: found += 1

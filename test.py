@@ -14,8 +14,10 @@ class Test:
 
 		fgd = findgreendot.FindGreenDot()
 		for entry in os.scandir("sample"):
-			result = fgd.procFrames("sample/" + entry.name)
-			print(entry.name,end=": ")
+		#for entry in ("morning-none-1.avi","sunshine-blink-1.avi","sunshine-light-1.avi"):
+			name = entry.name
+			result = fgd.procFrames("sample/" + name)
+			print(name,end=": ")
 			if result == 0: print("none")
 			if result == 1: print("light")
 			if result == 2: print("blink")
