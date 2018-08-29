@@ -97,81 +97,64 @@ class FindGreenDot:
 		result = target.load()
 
 		# copy source and draw separator
+
 		if self.saveImage:
 			for y in range(0,height):
 				result[width,y] = (0,255,0)
 				for x in range(0,width):
 					result[x + width + 1, y] = pixels[x,y]
 
-		# make edge image with sobel matrix (green)
+		# copy and analyze 3x3 region of the image
 
-		sobel = [
-			[(0,0,0), (0,0,0), (0,0,0)],
-			[(0,0,0), (0,0,0), (0,0,0)],
-			[(0,0,0), (0,0,0), (0,0,0)]
+		mx = [
+			[ (0,0,0), (0,0,0), (0,0,0) ],
+			[ (0,0,0), (0,0,0), (0,0,0) ],
+			[ (0,0,0), (0,0,0), (0,0,0) ]
 		]
-
 		for y in range(1,height - 1):
 			for x in range(1,width - 1):
 
-				sobel[0][0] = pixels[x - 1, y - 1]
-				sobel[0][1] = pixels[x    , y - 1]
-				sobel[0][2] = pixels[x + 1, y - 1]
+				# copy 3x3 region
 
-				sobel[1][0] = pixels[x - 1, y]
-				sobel[1][1] = pixels[x    , y]
-				sobel[1][2] = pixels[x + 1, y]
+				mx[0][0] = pixels[x - 1, y - 1]
+				mx[0][1] = pixels[x    , y - 1]
+				mx[0][2] = pixels[x + 1, y - 1]
 
-				sobel[2][0] = pixels[x - 1, y + 1]
-				sobel[2][1] = pixels[x    , y + 1]
-				sobel[2][2] = pixels[x + 1, y + 1]
+				mx[1][0] = pixels[x - 1, y]
+				mx[1][1] = pixels[x    , y]
+				mx[1][2] = pixels[x + 1, y]
 
-				colorDiff = [0,0,0]
-				for colorIndex in range(0,2):
-					colorDiff[colorIndex] = (
-						+1 * sobel[0][0][colorIndex] +
-						-1 * sobel[0][2][colorIndex] +
-						+2 * sobel[1][0][colorIndex] +
-						-2 * sobel[1][2][colorIndex] +
-						+1 * sobel[2][0][colorIndex] +
-						-1 * sobel[2][2][colorIndex]
-					)
+				mx[2][0] = pixels[x - 1, y + 1]
+				mx[2][1] = pixels[x    , y + 1]
+				mx[2][2] = pixels[x + 1, y + 1]
 
-				d = colorDiff[1]
-				if colorDiff[0] > colorDiff[1]: d = 0
-				if colorDiff[2] > colorDiff[1]: d = 0
-				(r,g,b) = sobel[1][1]
-				if r > g: d = 0
-				if b > g: d = 0
-				if d < 600: d = 0
+				# calc sobel-ish difference
 
-				result[x,y] = (0,d,0)
+				diff = (
+					mx[0][0][1] - mx[0][2][1] +
+					mx[1][0][1] - mx[1][2][1] +
+					mx[1][0][1] - mx[1][2][1] +
+					mx[2][0][1] - mx[2][2][1]
+				)
 
-		# find and mark large spots (yellow)
+				# filter for only green
 
-		found = 0
-		for y in range(1,height - 1):
-			for x in range(1,width - 1):
+				if mx[1][1][0] > mx[1][1][1]: diff = 0
+				if mx[1][1][2] > mx[1][1][1]: diff = 0
 
-				spot = 0
-				if result[x - 1,y - 1][1] > 0: spot += 1
-				if result[x    ,y - 1][1] > 0: spot += 2
-				if result[x + 1,y - 1][1] > 0: spot += 1
-				if result[x - 1,y][1] > 0: spot += 2
-				if result[x    ,y][1] > 0: spot += 3
-				if result[x + 1,y][1] > 0: spot += 2
-				if result[x - 1,y + 1][1] > 0: spot += 1
-				if result[x    ,y + 1][1] > 0: spot += 2
-				if result[x + 1,y + 1][1] > 0: spot += 1
-				
-				if spot > 4: 
-					found += 1
-					if self.saveImage: 
-						result[x,y] = (255,127,127)
+				# mark difference types (lighten, darken, unchanged) with color codes
+
+				if abs(diff) < 4 * 157:
+					result[x,y] = (0,0,255)
+				elif diff < 0:
+					result[x,y] = (255,0,0)
+				else:
+					result[x,y] = (0,255,0)
 
 		if self.saveImage:
 			target.save("/tmp/image.png","PNG")
 
+		found = 0
 		return found
 
 
@@ -225,7 +208,7 @@ class FindGreenDot:
 
 		if valueCount[0] == 0: return 1
 		if valueCount[1] == 0: return 0
-		
+
 		total = valueCount[0] + valueCount[1]
 		if valueCount[1] > total * 0.8: return 1
 
