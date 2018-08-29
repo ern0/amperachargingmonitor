@@ -106,6 +106,12 @@ class FindGreenDot:
 
 		# copy and analyze 3x3 region of the image
 
+		CHANGE_SMALL = 0
+		CHANGE_LIGHTER = 1
+		CHANGE_DARKER = 2
+		CHANGE_FILL = 3
+		FILL_OFF = -1
+
 		mx = [
 			[ (0,0,0), (0,0,0), (0,0,0) ],
 			[ (0,0,0), (0,0,0), (0,0,0) ],
@@ -131,10 +137,10 @@ class FindGreenDot:
 				# calc sobel-ish difference
 
 				diff = (
-					mx[0][0][1] - mx[0][2][1] +
-					mx[1][0][1] - mx[1][2][1] +
-					mx[1][0][1] - mx[1][2][1] +
-					mx[2][0][1] - mx[2][2][1]
+					mx[0][2][1] - mx[0][0][1] +
+					mx[1][2][1] - mx[1][0][1] +
+					mx[1][2][1] - mx[1][0][1] +
+					mx[2][2][1] - mx[2][0][1]
 				)
 
 				# filter for only green
@@ -144,12 +150,30 @@ class FindGreenDot:
 
 				# mark difference types (lighten, darken, unchanged) with color codes
 
-				if abs(diff) < 4 * 157:
-					result[x,y] = (0,0,255)
-				elif diff < 0:
-					result[x,y] = (255,0,0)
+				if abs(diff) < 4 * 128:
+					result[x,y] = (0,0,CHANGE_SMALL)
+				elif diff > 0:
+					result[x,y] = (1,255,CHANGE_LIGHTER)
 				else:
-					result[x,y] = (0,255,0)
+					result[x,y] = (255,1,CHANGE_DARKER)
+
+		# fill gaps
+
+		for y in range(1,height - 1):
+			fill = FILL_OFF
+			for x in range(1,width - 1):
+				pix = result[x,y]
+
+				if fill == FILL_OFF and pix[2] == CHANGE_LIGHTER:
+					fill = x + 1
+
+				if fill != FILL_OFF and pix[2] == CHANGE_DARKER:
+					if x - fill < 15:
+						for gap in range(fill,x): result[gap,y] = (255,255,CHANGE_FILL)
+					fill = FILL_OFF
+
+		# todo: find feature
+		pass
 
 		if self.saveImage:
 			target.save("/tmp/image.png","PNG")
