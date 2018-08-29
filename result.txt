@@ -1,12 +1,12 @@
 afternoon-light-1.avi: light
 afternoon-none.avi: none
 dark-blink.avi: blink
-dark-light-1.avi: none
-dark-light-2.avi: none
+dark-light-1.avi: light
+dark-light-2.avi: light
 morning-blink-1.avi: blink
 morning-blink-2.avi: blink
 morning-blink-3.avi: blink
-morning-none-1.avi: blink
+morning-none-1.avi: none
 morning-none-2.avi: none
 rainy-blink-1.avi: blink
 sunshine-blink-1.avi: blink

@@ -137,10 +137,7 @@ class FindGreenDot:
 				# calc sobel-ish difference
 
 				diff = (
-					mx[0][2][1] - mx[0][0][1] +
-					mx[1][2][1] - mx[1][0][1] +
-					mx[1][2][1] - mx[1][0][1] +
-					mx[2][2][1] - mx[2][0][1]
+					mx[1][2][1] - mx[1][0][1]
 				)
 
 				# filter for only green
@@ -150,7 +147,7 @@ class FindGreenDot:
 
 				# mark difference types (lighten, darken, unchanged) with color codes
 
-				if abs(diff) < 4 * 128:
+				if abs(diff) < 170:
 					result[x,y] = (0,0,CHANGE_SMALL)
 				elif diff > 0:
 					result[x,y] = (1,255,CHANGE_LIGHTER)
@@ -172,13 +169,99 @@ class FindGreenDot:
 						for gap in range(fill,x): result[gap,y] = (255,255,CHANGE_FILL)
 					fill = FILL_OFF
 
-		# todo: find feature
-		pass
+		# collect spots
+
+		spotMap = {}
+		spotNumero = 1
+		for y in range(2,height - 2):
+			for x in range(2,width - 2):
+				if result[x,y][2] == CHANGE_SMALL: continue
+
+				# neighbours: top 3 and left 1
+				neighbourSpots = {}
+				if (x - 1, y - 1) in spotMap: neighbourSpots[ spotMap[x - 1, y - 1] ] = None
+				if (x, y - 1) in spotMap: neighbourSpots[ spotMap[x, y - 1] ] = None
+				if (x + 1, y - 1) in spotMap: neighbourSpots[ spotMap[x + 1, y - 1] ] = None
+				if (x - 1, y) in spotMap: neighbourSpots[ spotMap[x - 1, y] ] = None
+				
+				# if no neighbour, register new spot
+				if len(neighbourSpots) == 0:
+					spotMap[x,y] = spotNumero
+					spotNumero += 1
+
+				# if homogenous neighbours, add actual pixel to it
+				elif len(neighbourSpots) == 1:
+					for onlyNeighbourNo in neighbourSpots: break
+					spotMap[x,y] = onlyNeighbourNo
+
+				# if heterogeneous neigbours, pick first, 
+				# then add actual and wipe all neighbours
+				else:
+					for firstNeighbourNo in neighbourSpots: break
+					spotMap[x,y] = firstNeighbourNo
+					if (x - 1, y - 1) in spotMap: spotMap[x - 1, y - 1] = firstNeighbourNo
+					if (x   , y - 1) in spotMap: spotMap[x, y - 1] = firstNeighbourNo
+					if (x + 1, y - 1) in spotMap: spotMap[x + 1, y - 1] = firstNeighbourNo
+					if (x - 1, y) in spotMap: spotMap[x + 1, y - 1] = firstNeighbourNo
+
+		# get bounding rectangles of collected spots
+
+		spotTops = {}
+		spotBottoms = {}
+		spotLefts = {}
+		spotRights = {}
+		spotPixels = {}
+		for spotCoords in spotMap:
+			spotId = spotMap[spotCoords]
+
+			if spotId not in spotPixels:
+				spotTops[spotId] = spotCoords[1]
+				spotBottoms[spotId] = spotCoords[1]
+				spotLefts[spotId] = spotCoords[0]
+				spotRights[spotId] = spotCoords[0]
+				spotPixels[spotId] = 0
+
+			if spotCoords[1] < spotTops[spotId]: spotTops[spotId] = spotCoords[1]
+			if spotCoords[1] > spotBottoms[spotId]: spotBottoms[spotId] = spotCoords[1]
+			if spotCoords[0] < spotLefts[spotId]: spotLefts[spotId] = spotCoords[0]
+			if spotCoords[0] > spotRights[spotId]: spotRights[spotId] = spotCoords[0]
+			spotPixels[spotId] += 1
+
+		# find matching spots
+
+		found = 0
+		for spotId in spotPixels:
+			
+			w = spotRights[spotId] - spotLefts[spotId] + 1
+			h = spotBottoms[spotId] - spotTops[spotId] + 1
+			w -= 2  # correct horizontal sobel error
+
+			# drop small ones
+			if w < 2: continue
+			if h < 2: continue
+
+			# drop diagonal lines
+			fillPix = spotPixels[spotId] / (w * h)
+			if fillPix < 0.6: continue
+
+			found += 1
+
+			if self.saveImage: print(
+				spotLefts[spotId],
+				spotTops[spotId],
+				spotRights[spotId],
+				spotBottoms[spotId],
+				" - ",
+				w,"x",h,
+				spotPixels[spotId],
+				fillPix
+			)
+
+		# save image for debugging purposes
 
 		if self.saveImage:
 			target.save("/tmp/image.png","PNG")
 
-		found = 0
 		return found
 
 
