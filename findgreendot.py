@@ -19,7 +19,7 @@ class FindGreenDot:
 
 	MIN_SIZE_PX = 2
 	MIN_FILL_RATIO = 0.6
-	MIN_FILL_PIX = 1
+	MIN_FILL_PIX = 5
 	MIN_SQUARE_RATIO = 0.7
 
 
@@ -277,7 +277,6 @@ class FindGreenDot:
 			# pre-calculate some values for debugging
 
 			fillRatio = spotPixels[spotId] / (w * h)
-			fillMiss = (w * h) - spotPixels[spotId]
 			if correctedW == 0 or h == 0:
 				printableRatio = "n.a."
 			else:
@@ -298,7 +297,6 @@ class FindGreenDot:
 				"filled:",
 				str(spotPixels[spotId]) + "/" + str(w * h),
 				str(round(fillRatio * 10000) / 100) + "%",
-				fillMiss,
 				end = " - "
 			)
 			
@@ -308,11 +306,17 @@ class FindGreenDot:
 				if self.saveImage: print("small size")
 				continue
 
-			# drop unfilled ones, e.g. diagonal lines
+			# drop ones with weak fill ratio, e.g. diagonal lines
 			# (using uncorrected width for fill ratio)
 
-			if fillRatio < self.MIN_FILL_RATIO and fillMiss > self.MIN_FILL_PIX: 
+			if fillRatio < self.MIN_FILL_RATIO: 
 				if self.saveImage: print("fill ratio")
+				continue
+
+			# drop ones with only few pixels filled
+
+			if spotPixels[spotId] < self.MIN_FILL_PIX: 
+				if self.saveImage: print("fill number")
 				continue
 
 			# drop non-square-ish shapes
