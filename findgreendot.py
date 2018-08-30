@@ -12,12 +12,14 @@ class FindGreenDot:
 
 	# image parameters
 
-	SOBEL_DIFF = 170
+	SOBEL_DIFF_LIGHTER = 170
+	SOBEL_DIFF_DARKER = 150
 	
 	# spot parameters
 
 	MIN_SIZE_PX = 2
 	MIN_FILL_RATIO = 0.6
+	MIN_FILL_PIX = 1
 	MIN_SQUARE_RATIO = 0.7
 
 
@@ -158,12 +160,19 @@ class FindGreenDot:
 
 				# mark difference types (lighten, darken, unchanged) with color codes
 
-				if abs(diff) < self.SOBEL_DIFF:
-					result[x,y] = (0,0,CHANGE_SMALL)
-				elif diff > 0:
-					result[x,y] = (1,255,CHANGE_LIGHTER)
+				if diff > 0:
+
+					if abs(diff) > self.SOBEL_DIFF_LIGHTER:
+						result[x,y] = (1,255,CHANGE_LIGHTER)
+					else:
+						result[x,y] = (0,0,CHANGE_SMALL)
+
 				else:
-					result[x,y] = (255,1,CHANGE_DARKER)
+
+					if abs(diff) > self.SOBEL_DIFF_DARKER:
+						result[x,y] = (255,1,CHANGE_DARKER)
+					else:
+						result[x,y] = (0,0,CHANGE_SMALL)
 
 		# fill gaps
 
@@ -218,7 +227,7 @@ class FindGreenDot:
 					if (x - 1, y - 1) in spotMap: spotMap[x - 1, y - 1] = firstNeighbourNo
 					if (x   , y - 1) in spotMap: spotMap[x, y - 1] = firstNeighbourNo
 					if (x + 1, y - 1) in spotMap: spotMap[x + 1, y - 1] = firstNeighbourNo
-					if (x - 1, y) in spotMap: spotMap[x + 1, y - 1] = firstNeighbourNo
+					if (x - 1, y) in spotMap: spotMap[x - 1, y] = firstNeighbourNo
 
 		# get bounding rectangles of collected spots
 
@@ -243,6 +252,16 @@ class FindGreenDot:
 			if spotCoords[0] > spotRights[spotId]: spotRights[spotId] = spotCoords[0]
 			spotPixels[spotId] += 1
 
+		# draw bounding boxes
+
+		if self.saveImage: 
+			for spotCoords in spotMap:
+				spotId = spotMap[spotCoords]
+				for y in range(spotTops[spotId],spotBottoms[spotId] + 1):
+					for x in range(spotLefts[spotId],spotRights[spotId] + 1):
+						if result[x,y][2] == CHANGE_SMALL:
+							result[x,y] = (127,127,255)
+
 		# find spots which matches our criterias
 
 		found = 0
@@ -257,7 +276,8 @@ class FindGreenDot:
 
 			# pre-calculate some values for debugging
 
-			fillPix = spotPixels[spotId] / (w * h)
+			fillRatio = spotPixels[spotId] / (w * h)
+			fillMiss = (w * h) - spotPixels[spotId]
 			if correctedW == 0 or h == 0:
 				printableRatio = "n.a."
 			else:
@@ -277,30 +297,31 @@ class FindGreenDot:
 				printableRatio,
 				"filled:",
 				str(spotPixels[spotId]) + "/" + str(w * h),
-				str(round(fillPix * 10000) / 100) + "%",
+				str(round(fillRatio * 10000) / 100) + "%",
+				fillMiss,
 				end = " - "
 			)
 			
-			# drop small ones
+			# drop small ones (using corrected width for size)
 
 			if correctedW < self.MIN_SIZE_PX or h < self.MIN_SIZE_PX: 
-				if self.saveImage: print("size too small")
+				if self.saveImage: print("small size")
 				continue
 
 			# drop unfilled ones, e.g. diagonal lines
-			# (using uncorrected width)
+			# (using uncorrected width for fill ratio)
 
-			if fillPix < self.MIN_FILL_RATIO: 
-				if self.saveImage: print("fill ratio low")
+			if fillRatio < self.MIN_FILL_RATIO and fillMiss > self.MIN_FILL_PIX: 
+				if self.saveImage: print("fill ratio")
 				continue
 
 			# drop non-square-ish shapes
 
 			if ratio < self.MIN_SQUARE_RATIO: 
-				if self.saveImage: print("not a square")
+				if self.saveImage: print("not square")
 				continue
 
-			# checpoint, all criteria matches
+			# checkpoint, all the criteria checks passed
 
 			if self.saveImage: print("PASSED")
 			found += 1
