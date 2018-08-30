@@ -10,6 +10,17 @@ from PIL import Image
 class FindGreenDot:
 
 
+	# image parameters
+
+	SOBEL_DIFF = 170
+	
+	# spot parameters
+
+	MIN_SIZE_PX = 2
+	MIN_FILL_RATIO = 0.6
+	MIN_SQUARE_RATIO = 0.7
+
+
 	def main(self):
 
 		try: fnam = sys.argv[1]
@@ -147,7 +158,7 @@ class FindGreenDot:
 
 				# mark difference types (lighten, darken, unchanged) with color codes
 
-				if abs(diff) < 150:
+				if abs(diff) < self.SOBEL_DIFF:
 					result[x,y] = (0,0,CHANGE_SMALL)
 				elif diff > 0:
 					result[x,y] = (1,255,CHANGE_LIGHTER)
@@ -272,20 +283,20 @@ class FindGreenDot:
 			
 			# drop small ones
 
-			if correctedW < 2 or h < 2: 
+			if correctedW < self.MIN_SIZE_PX or h < self.MIN_SIZE_PX: 
 				if self.saveImage: print("size too small")
 				continue
 
 			# drop unfilled ones, e.g. diagonal lines
 			# (using uncorrected width)
 
-			if fillPix < 0.6: 
+			if fillPix < MIN_FILL_RATIO: 
 				if self.saveImage: print("fill ratio low")
 				continue
 
 			# drop non-square-ish shapes
 
-			if ratio < 0.7: 
+			if ratio < MIN_SQUARE_RATIO: 
 				if self.saveImage: print("not a square")
 				continue
 
