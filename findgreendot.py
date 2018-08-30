@@ -147,7 +147,7 @@ class FindGreenDot:
 
 				# mark difference types (lighten, darken, unchanged) with color codes
 
-				if abs(diff) < 170:
+				if abs(diff) < 150:
 					result[x,y] = (0,0,CHANGE_SMALL)
 				elif diff > 0:
 					result[x,y] = (1,255,CHANGE_LIGHTER)
@@ -178,24 +178,29 @@ class FindGreenDot:
 				if result[x,y][2] == CHANGE_SMALL: continue
 
 				# neighbours: top 3 and left 1
+
 				neighbourSpots = {}
 				if (x - 1, y - 1) in spotMap: neighbourSpots[ spotMap[x - 1, y - 1] ] = None
 				if (x, y - 1) in spotMap: neighbourSpots[ spotMap[x, y - 1] ] = None
 				if (x + 1, y - 1) in spotMap: neighbourSpots[ spotMap[x + 1, y - 1] ] = None
 				if (x - 1, y) in spotMap: neighbourSpots[ spotMap[x - 1, y] ] = None
 				
-				# if no neighbour, register new spot
+				# if there is no neighbour, register new spot
+
 				if len(neighbourSpots) == 0:
 					spotMap[x,y] = spotNumero
 					spotNumero += 1
 
-				# if homogenous neighbours, add actual pixel to it
+				# if there are homogenous neighbours, 
+				# add actual pixel to this spot
+
 				elif len(neighbourSpots) == 1:
 					for onlyNeighbourNo in neighbourSpots: break
 					spotMap[x,y] = onlyNeighbourNo
 
-				# if heterogeneous neigbours, pick first, 
-				# then add actual and wipe all neighbours
+				# if there're heterogeneous neigbours, pick first, 
+				# then add actual and all other neighbours to this spot
+
 				else:
 					for firstNeighbourNo in neighbourSpots: break
 					spotMap[x,y] = firstNeighbourNo
@@ -227,35 +232,67 @@ class FindGreenDot:
 			if spotCoords[0] > spotRights[spotId]: spotRights[spotId] = spotCoords[0]
 			spotPixels[spotId] += 1
 
-		# find matching spots
+		# find spots which matches our criterias
 
 		found = 0
 		for spotId in spotPixels:
-			
+
+			# calculate bounding rectangle width and height
+			# we used horizontal sobel, so width is corrected
+
 			w = spotRights[spotId] - spotLefts[spotId] + 1
 			h = spotBottoms[spotId] - spotTops[spotId] + 1
-			w -= 2  # correct horizontal sobel error
+			correctedW = w - 1
 
-			# drop small ones
-			if w < 2: continue
-			if h < 2: continue
+			# pre-calculate some values for debugging
 
-			# drop diagonal lines
 			fillPix = spotPixels[spotId] / (w * h)
-			if fillPix < 0.6: continue
+			if correctedW == 0 or h == 0:
+				printableRatio = "n.a."
+			else:
+				ratio = max(correctedW,h) / min(correctedW,h)
+				printableRatio = str(round(ratio * 100) / 100) + ":1"
 
-			found += 1
+			# print some info when debugging
 
 			if self.saveImage: print(
-				spotLefts[spotId],
-				spotTops[spotId],
-				spotRights[spotId],
-				spotBottoms[spotId],
-				" - ",
-				w,"x",h,
-				spotPixels[spotId],
-				fillPix
+				"TL:",
+				str(spotLefts[spotId]) + ";" +
+				str(spotTops[spotId]),
+				"dim:",
+				str(w) + "x" + str(h),
+				"(" +	str(correctedW) + "x" + str(h) + ")",
+				"ratio:",
+				printableRatio,
+				"filled:",
+				str(spotPixels[spotId]) + "/" + str(w * h),
+				str(round(fillPix * 10000) / 100) + "%",
+				end = " - "
 			)
+			
+			# drop small ones
+
+			if correctedW < 2 or h < 2: 
+				if self.saveImage: print("size too small")
+				continue
+
+			# drop unfilled ones, e.g. diagonal lines
+			# (using uncorrected width)
+
+			if fillPix < 0.6: 
+				if self.saveImage: print("fill ratio low")
+				continue
+
+			# drop non-square-ish shapes
+
+			if ratio < 0.7: 
+				if self.saveImage: print("not a square")
+				continue
+
+			# checpoint, all criteria matches
+
+			if self.saveImage: print("PASSED")
+			found += 1
 
 		# save image for debugging purposes
 
