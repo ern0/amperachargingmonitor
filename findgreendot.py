@@ -290,13 +290,13 @@ class FindGreenDot:
 			# drop unfilled ones, e.g. diagonal lines
 			# (using uncorrected width)
 
-			if fillPix < MIN_FILL_RATIO: 
+			if fillPix < self.MIN_FILL_RATIO: 
 				if self.saveImage: print("fill ratio low")
 				continue
 
 			# drop non-square-ish shapes
 
-			if ratio < MIN_SQUARE_RATIO: 
+			if ratio < self.MIN_SQUARE_RATIO: 
 				if self.saveImage: print("not a square")
 				continue
 
