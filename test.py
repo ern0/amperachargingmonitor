@@ -13,14 +13,29 @@ class Test:
 	def main(self):
 
 		fgd = findgreendot.FindGreenDot()
+
+		print("SOBEL_DIFF_LIGHTER = " + str(fgd.SOBEL_DIFF_LIGHTER))
+		print("SOBEL_DIFF_DARKER = " + str(fgd.SOBEL_DIFF_DARKER))
+		print("MIN_SIZE_PX = " + str(fgd.MIN_SIZE_PX))
+		print("MIN_FILL_RATIO = " + str(fgd.MIN_FILL_RATIO))
+		print("MIN_FILL_PIX = " + str(fgd.MIN_FILL_PIX))
+		print("MIN_SQUARE_RATIO = " + str(fgd.MIN_SQUARE_RATIO))
+		print()
+
 		for entry in os.scandir("sample"):
-		#for entry in ("morning-none-1.avi","sunshine-blink-1.avi","sunshine-light-1.avi"):
-			name = entry.name
-			result = fgd.procFrames("sample/" + name)
-			print(name,end=": ")
-			if result == 0: print("none")
-			if result == 1: print("light")
-			if result == 2: print("blink")
+
+			result = fgd.procFrames("sample/" + entry.name)
+			text = "wtf"
+			if result == 0: text = "none"
+			if result == 1: text = "light"
+			if result == 2: text = "blink"
+
+			if text in entry.name:
+				print("[X]",end=" ")
+			else:
+				print("[X]",end=" ")
+			print(entry.name,end=": ")
+			print(text)
 
 
 	def fatal(self,msg):

@@ -3,9 +3,10 @@ clear
 
 rm -rf /tmp/image.png
 
-./findgreendot.py sample/morning-none-1.avi $1
-#./findgreendot.py sample/sunshine-blink-1.avi $1
+#./findgreendot.py sample/morning-none-1.avi $1
+./findgreendot.py sample/sunshine-blink-1.avi $1
 #./findgreendot.py sample/sunshine-light-1.avi $1
+#./findgreendot.py sample/afternoon-light-1.avi $1
 
 if [ "`uname -s`" = "Darwin" ]; then
 	pkill Sequential
@@ -14,4 +15,4 @@ else
 	/usr/local/bin/open 2>/dev/null /tmp/image.png
 fi
 
-sleep 0.2 
+sleep 0.2

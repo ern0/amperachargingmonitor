@@ -14,7 +14,7 @@ class FindGreenDot:
 
 	SOBEL_DIFF_LIGHTER = 170
 	SOBEL_DIFF_DARKER = 150
-	
+
 	# spot parameters
 
 	MIN_SIZE_PX = 2
@@ -111,7 +111,7 @@ class FindGreenDot:
 
 		# copy source and draw separator
 
-		if self.saveImage:
+		if self.debugMode:
 			for y in range(0,height):
 				result[width,y] = (0,255,0)
 				for x in range(0,width):
@@ -191,43 +191,52 @@ class FindGreenDot:
 
 		# collect spots
 
-		spotMap = {}
-		spotNumero = 1
+		xyOffsets = [  # neighbour offset x,y pairs for later use
+			(-1,-2), ( 0,-2), (+1,-2),
+			( 0,-1), ( 0,-1), (+1,-1),
+			(-1,0)
+		]
+
+		spotMap = {}  # spotMap[ tupleof(x,y) ] = spot ID
+		nextSpotId = 1  # initial spot ID
+
 		for y in range(2,height - 2):
 			for x in range(2,width - 2):
 				if result[x,y][2] == CHANGE_SMALL: continue
 
-				# neighbours: top 3 and left 1
+				# add current diff-pixel to an existing spot, or create a new one
 
-				neighbourSpots = {}
-				if (x - 1, y - 1) in spotMap: neighbourSpots[ spotMap[x - 1, y - 1] ] = None
-				if (x, y - 1) in spotMap: neighbourSpots[ spotMap[x, y - 1] ] = None
-				if (x + 1, y - 1) in spotMap: neighbourSpots[ spotMap[x + 1, y - 1] ] = None
-				if (x - 1, y) in spotMap: neighbourSpots[ spotMap[x - 1, y] ] = None
-				
+				neighbourSpots = {}  # neighbourSpots[ spotId ] = dummy
+
+				# collect neigbour spot IDs
+
+				for xyOffset in xyOffsets:
+					xy = ( x + xyOffset[0], y + xyOffset[1] )
+
+					if xy not in spotMap: continue
+					spotId = spotMap[xy]
+					neighbourSpots[spotId] = None
+
 				# if there is no neighbour, register new spot
 
 				if len(neighbourSpots) == 0:
-					spotMap[x,y] = spotNumero
-					spotNumero += 1
+					spotMap[x,y] = nextSpotId
+					nextSpotId += 1
 
-				# if there are homogenous neighbours, 
-				# add actual pixel to this spot
-
-				elif len(neighbourSpots) == 1:
-					for onlyNeighbourNo in neighbourSpots: break
-					spotMap[x,y] = onlyNeighbourNo
-
-				# if there're heterogeneous neigbours, pick first, 
-				# then add actual and all other neighbours to this spot
+				# else make union for all spots touched as neighbour
 
 				else:
-					for firstNeighbourNo in neighbourSpots: break
-					spotMap[x,y] = firstNeighbourNo
-					if (x - 1, y - 1) in spotMap: spotMap[x - 1, y - 1] = firstNeighbourNo
-					if (x   , y - 1) in spotMap: spotMap[x, y - 1] = firstNeighbourNo
-					if (x + 1, y - 1) in spotMap: spotMap[x + 1, y - 1] = firstNeighbourNo
-					if (x - 1, y) in spotMap: spotMap[x - 1, y] = firstNeighbourNo
+					# pick a random neighbour's ID
+					for unionId in neighbourSpots: break
+
+					# change all neighbours' ID in spotMap to union ID
+					for obsoleteSpotId in neighbourSpots:
+						for xy in spotMap:
+							if spotMap[xy] != obsoleteSpotId: continue
+							spotMap[xy] = unionId
+
+					# set current diff-pixel ID to union ID
+					spotMap[x,y] = unionId
 
 		# get bounding rectangles of collected spots
 
@@ -252,16 +261,6 @@ class FindGreenDot:
 			if spotCoords[0] > spotRights[spotId]: spotRights[spotId] = spotCoords[0]
 			spotPixels[spotId] += 1
 
-		# draw bounding boxes
-
-		if self.saveImage: 
-			for spotCoords in spotMap:
-				spotId = spotMap[spotCoords]
-				for y in range(spotTops[spotId],spotBottoms[spotId] + 1):
-					for x in range(spotLefts[spotId],spotRights[spotId] + 1):
-						if result[x,y][2] == CHANGE_SMALL:
-							result[x,y] = (127,127,255)
-
 		# find spots which matches our criterias
 
 		found = 0
@@ -274,10 +273,13 @@ class FindGreenDot:
 			h = spotBottoms[spotId] - spotTops[spotId] + 1
 			correctedW = w - 1
 
+			match = True
+
 			# pre-calculate some values for debugging
 
 			fillRatio = spotPixels[spotId] / (w * h)
 			if correctedW == 0 or h == 0:
+				ratio = None
 				printableRatio = "n.a."
 			else:
 				ratio = max(correctedW,h) / min(correctedW,h)
@@ -285,7 +287,7 @@ class FindGreenDot:
 
 			# print some info when debugging
 
-			if self.saveImage: print(
+			if self.debugMode: print(
 				"TL:",
 				str(spotLefts[spotId]) + ";" +
 				str(spotTops[spotId]),
@@ -297,42 +299,67 @@ class FindGreenDot:
 				"filled:",
 				str(spotPixels[spotId]) + "/" + str(w * h),
 				str(round(fillRatio * 10000) / 100) + "%",
-				end = " - "
+				end = " -"
 			)
-			
+
 			# drop small ones (using corrected width for size)
 
-			if correctedW < self.MIN_SIZE_PX or h < self.MIN_SIZE_PX: 
-				if self.saveImage: print("small size")
-				continue
+			if correctedW < self.MIN_SIZE_PX or h < self.MIN_SIZE_PX:
+				if self.debugMode: print(" small_size",end="")
+				match = False
 
 			# drop ones with weak fill ratio, e.g. diagonal lines
 			# (using uncorrected width for fill ratio)
 
-			if fillRatio < self.MIN_FILL_RATIO: 
-				if self.saveImage: print("fill ratio")
-				continue
+			if fillRatio < self.MIN_FILL_RATIO:
+				if self.debugMode: print(" fill_ratio",end="")
+				match = False
 
 			# drop ones with only few pixels filled
 
-			if spotPixels[spotId] < self.MIN_FILL_PIX: 
-				if self.saveImage: print("fill number")
-				continue
+			if spotPixels[spotId] < self.MIN_FILL_PIX:
+				if self.debugMode: print(" fill_number",end="")
+				match = False
 
 			# drop non-square-ish shapes
 
-			if ratio < self.MIN_SQUARE_RATIO: 
-				if self.saveImage: print("not square")
-				continue
+			if ratio is not None:
+				if ratio < self.MIN_SQUARE_RATIO:
+					if self.debugMode: print(" not_square",end="")
+					match = False
 
-			# checkpoint, all the criteria checks passed
+			# checkpoint, report if no matching failed
 
-			if self.saveImage: print("PASSED")
-			found += 1
+			if match:
+				found += 1
+				if self.debugMode: print(" PASSED.")
+			else:
+				if self.debugMode: print()
+
+			# draw bounding boxes
+
+			if self.debugMode:
+				for y in range(spotTops[spotId] - 1,spotBottoms[spotId] + 2):
+					for x in range(spotLefts[spotId] - 1,spotRights[spotId] + 2):
+						if result[x,y][2] != CHANGE_SMALL: continue
+
+						extra = False
+						if y < spotTops[spotId]: extra = True
+						if y > spotBottoms[spotId]: extra = True
+						if x < spotLefts[spotId]: extra = True
+						if x > spotRights[spotId]: extra = True
+
+						if match:
+							if extra: result[x,y] = (192,192,255)
+							else: result[x,y] = (0,0,255)
+
+						else:
+							if extra: result[x,y] = (127,127,127)
+							else: result[x,y] = (63,63,63)
 
 		# save image for debugging purposes
 
-		if self.saveImage:
+		if self.debugMode:
 			target.save("/tmp/image.png","PNG")
 
 		return found
@@ -344,10 +371,10 @@ class FindGreenDot:
 
 		if specifiedFrame is None:
 			frameRange = range(0,frameCount)
-			self.saveImage = False
+			self.debugMode = False
 		else:
 			frameRange = [ specifiedFrame, ]
-			self.saveImage = True
+			self.debugMode = True
 
 		valueCount = [0,0]
 		for i in frameRange:
