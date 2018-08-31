@@ -138,6 +138,7 @@ class FindGreenDot:
 		self.hardFillGaps()
 		self.hardCollectSpots()
 		self.hardCalcBoundingRects()
+		self.hardUnionBoundingRects()
 		self.hardFindMatchingSpots()
 		self.hardDrawBoundingBoxes()
 
@@ -168,7 +169,7 @@ class FindGreenDot:
 		for y in range(1,self.height - 1):
 			for x in range(1,self.width - 1):
 
-				# copy 3x3 region (known issue: not used now)
+				# copy 3x3 region (known issue: not used in this version)
 
 				mx[0][0] = self.pixels[x - 1, y - 1]
 				mx[0][1] = self.pixels[x    , y - 1]
@@ -281,30 +282,101 @@ class FindGreenDot:
 
 	def hardCalcBoundingRects(self):
 
+		self.spotPixels = {}
+
 		self.spotTops = {}
 		self.spotBottoms = {}
 		self.spotLefts = {}
 		self.spotRights = {}
-		self.spotPixels = {}
 
 		for spotCoords in self.spotMap:
 			spotId = self.spotMap[spotCoords]
 
 			if spotId not in self.spotPixels:
+
+				self.spotPixels[spotId] = 0
+
 				self.spotTops[spotId] = spotCoords[1]
 				self.spotBottoms[spotId] = spotCoords[1]
 				self.spotLefts[spotId] = spotCoords[0]
 				self.spotRights[spotId] = spotCoords[0]
-				self.spotPixels[spotId] = 0
+
+			self.spotPixels[spotId] += 1
 
 			if spotCoords[1] < self.spotTops[spotId]: self.spotTops[spotId] = spotCoords[1]
 			if spotCoords[1] > self.spotBottoms[spotId]: self.spotBottoms[spotId] = spotCoords[1]
 			if spotCoords[0] < self.spotLefts[spotId]: self.spotLefts[spotId] = spotCoords[0]
 			if spotCoords[0] > self.spotRights[spotId]: self.spotRights[spotId] = spotCoords[0]
 
-			self.spotPixels[spotId] += 1
 
-			# TODO: find spot to attach this spot
+
+	def hardUnionBoundingRects(self):
+
+		unions = {}
+		merged = {}
+
+		# find near or fully overlapping bounding boxes
+
+		for id1 in self.spotPixels:
+			for id2 in self.spotPixels:
+				if id2 <= id1: continue
+
+				uniteVert = False
+
+				if (
+					self.spotTops[id1]
+					<= self.spotTops[id2] - 2 <= 
+					self.spotBottoms[id1]
+				): uniteVert = True
+
+				if (
+					self.spotTops[id1]
+					<= self.spotBottoms[id2] + 2 <= 
+					self.spotBottoms[id1]
+				): uniteVert = True
+
+				uniteHoriz = False
+
+				if (
+					self.spotLefts[id1]
+					<= self.spotLefts[id2] - 2 <= 
+					self.spotRights[id1]
+				): uniteHoriz = True
+
+				if (
+					self.spotLefts[id1]
+					<= self.spotRights[id2] + 2 <= 
+					self.spotRights[id1]
+				): uniteHoriz = True
+
+				if not (uniteHoriz and uniteVert): continue
+
+				if id1 in merged: 
+					mid1 = merged[id1]
+				else: 
+					mid1 = id1
+
+				if id2 in merged: 
+					mid2 = merged[id2]
+				else: 
+					mid2 = id2
+					merged[id2] = id1
+
+				if mid1 not in unions: unions[mid1] = {}
+				unions[mid1][mid2] = None
+
+		# make unions
+
+		for id1 in unions:
+			for id2 in unions[id1]:
+
+				self.spotTops[id1] = min(self.spotTops[id1],self.spotTops[id2])
+				self.spotBottoms[id1] = max(self.spotBottoms[id1],self.spotBottoms[id2])
+				self.spotLefts[id1] = min(self.spotLefts[id1],self.spotLefts[id2])
+				self.spotRights[id1] = max(self.spotRights[id1],self.spotRights[id2])
+				self.spotPixels[id1] += self.spotPixels[id2]
+
+				del self.spotPixels[id2]
 
 
 	def hardFindMatchingSpots(self):
@@ -335,6 +407,7 @@ class FindGreenDot:
 			# print some info when debugging
 
 			if self.debugMode: print(
+				"#" + str(spotId),
 				"TL:",
 				str(self.spotLefts[spotId]) + ";" +
 				str(self.spotTops[spotId]),
