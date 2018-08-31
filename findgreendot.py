@@ -286,6 +286,7 @@ class FindGreenDot:
 		self.spotLefts = {}
 		self.spotRights = {}
 		self.spotPixels = {}
+
 		for spotCoords in self.spotMap:
 			spotId = self.spotMap[spotCoords]
 
@@ -300,7 +301,10 @@ class FindGreenDot:
 			if spotCoords[1] > self.spotBottoms[spotId]: self.spotBottoms[spotId] = spotCoords[1]
 			if spotCoords[0] < self.spotLefts[spotId]: self.spotLefts[spotId] = spotCoords[0]
 			if spotCoords[0] > self.spotRights[spotId]: self.spotRights[spotId] = spotCoords[0]
+
 			self.spotPixels[spotId] += 1
+
+			# TODO: find spot to attach this spot
 
 
 	def hardFindMatchingSpots(self):
