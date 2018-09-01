@@ -9,13 +9,14 @@ from PIL import Image
 
 class FindGreenDot:
 
+	# processing method
 
-	# image parameters
+	WAY = "easy"
+
+	# hard way parameters
 
 	SOBEL_DIFF_LIGHTER = 130
 	SOBEL_DIFF_DARKER = 110
-
-	# spot parameters
 
 	MIN_SIZE_PX = 3
 	MIN_FILL_RATIO = 0.6
@@ -81,6 +82,64 @@ class FindGreenDot:
 		except: self.fatal("ffprobe failed")
 
 
+	def procFrames(self,fnam,specifiedFrame = None):
+
+		frameCount = self.countNumberOfFrames(fnam)
+
+		if specifiedFrame is None:
+			frameRange = range(0,frameCount)
+			self.debugMode = False
+		else:
+			frameRange = [ specifiedFrame, ]
+			self.debugMode = True
+
+		valueCount = [0,0]
+		for i in frameRange:
+
+			self.extractFrame(fnam,i)
+			found = self.procImage(fnam)
+			if found > 0: value = 1
+			else: value = 0
+
+			valueCount[value] += 1
+
+			sys.stderr.write(
+				fnam
+				+ ":"
+				+ str.zfill(str(i),3)
+				+ " "
+			)
+
+			for i in range(0,found):
+				sys.stderr.write("#")
+
+			sys.stderr.write(
+				" "
+				+ str(found)
+				+ "\n"
+			)
+
+			sys.stderr.flush()
+
+		sys.stderr.write(
+			" dark="
+			+ str(valueCount[0])
+			+ " light="
+			+ str(valueCount[1])
+			+ "\n"
+		)
+		sys.stderr.flush()
+
+		if valueCount[0] == 0: return 1
+		if valueCount[1] == 0: return 0
+
+		total = valueCount[0] + valueCount[1]
+		if valueCount[1] > total * 0.8: return 1
+
+		if valueCount[0] > valueCount[1]: return 2
+		return 0
+
+
 	def extractFrame(self,fnam,frameNo):
 
 		try: os.unlink(self.mkTmpImgPath(fnam))
@@ -96,7 +155,7 @@ class FindGreenDot:
 		).read()
 
 
-	def procImage(self,fnam,way = "hard"):
+	def procImage(self,fnam):
 
 		source = Image.open(self.mkTmpImgPath(fnam))
 		(self.width,self.height) = source.size
@@ -120,7 +179,7 @@ class FindGreenDot:
 		# perform the job
 
 		found = -1
-		if way == "hard": found = self.procImageTheHardWay()
+		if self.WAY == "hard": found = self.procImageTheHardWay()
 		else: found = self.procImageTheEasyWay()
 
 		# save image for debugging purposes
@@ -495,62 +554,89 @@ class FindGreenDot:
 							else: self.result[x,y] = (63,63,63)
 
 
-	def procFrames(self,fnam,specifiedFrame = None):
+	def procImageTheEasyWay(self):
 
-		frameCount = self.countNumberOfFrames(fnam)
+		for y in range(11,self.height - 11):
+			for x in range(11,self.width - 11):
 
-		if specifiedFrame is None:
-			frameRange = range(0,frameCount)
-			self.debugMode = False
-		else:
-			frameRange = [ specifiedFrame, ]
-			self.debugMode = True
+				r1 = self.easyBlurPix(0,x,y)
+				g1 = self.easyBlurPix(1,x,y)
+				b1 = self.easyBlurPix(2,x,y)
 
-		valueCount = [0,0]
-		for i in frameRange:
+				r2 = self.easyBlurCircle(0,x,y)
+				g2 = self.easyBlurCircle(1,x,y)
+				b2 = self.easyBlurCircle(2,x,y)
 
-			self.extractFrame(fnam,i)
-			found = self.procImage(fnam)
-			if found > 0: value = 1
-			else: value = 0
+				r = r1 - r2
+				if r < 0: r = 0
+				g = g1 - g2
+				if g < 0: g = 0
+				b = b1 - b2
+				if b < 0: b = 0
 
-			valueCount[value] += 1
+				if g1 <= r1: (r,g,b) = (0,0,0)
+				if g1 <= b1: (r,g,b) = (0,0,0)
+				if g1 < 127: (r,g,b) = (0,0,0)
 
-			sys.stderr.write(
-				fnam
-				+ ":"
-				+ str.zfill(str(i),3)
-				+ " "
-			)
+				if r2 > 100: (r,g,b) = (0,0,0)
+				if g2 > 100: (r,g,b) = (0,0,0)
+				if b2 > 100: (r,g,b) = (0,0,0)
 
-			for i in range(0,found):
-				sys.stderr.write("#")
+				if g < 100: (r,g,b) = (0,0,0)
 
-			sys.stderr.write(
-				" "
-				+ str(found)
-				+ "\n"
-			)
+				self.result[x,y] = (r,g,b)
 
-			sys.stderr.flush()
-
-		sys.stderr.write(
-			" dark="
-			+ str(valueCount[0])
-			+ " light="
-			+ str(valueCount[1])
-			+ "\n"
-		)
-		sys.stderr.flush()
-
-		if valueCount[0] == 0: return 1
-		if valueCount[1] == 0: return 0
-
-		total = valueCount[0] + valueCount[1]
-		if valueCount[1] > total * 0.8: return 1
-
-		if valueCount[0] > valueCount[1]: return 2
 		return 0
+
+
+	def easyBlurPix(self,i,x,y):
+
+		v = self.pixels[ x - 1, y - 1 ][i]
+		v += self.pixels[ x    , y - 1 ][i] * 2
+		v += self.pixels[ x + 1, y - 1 ][i]
+		v += self.pixels[ x - 1, y ][i] * 2
+		v += self.pixels[ x    , y ][i] * 4
+		v += self.pixels[ x + 1, y ][i] * 2
+		v += self.pixels[ x - 1, y + 1 ][i]
+		v += self.pixels[ x    , y + 1 ][i] * 2
+		v += self.pixels[ x + 1, y + 1 ][i]
+
+		return int(v / 16)
+
+
+	def easyBlurCircle(self,i,x,y):
+
+		v = 0
+
+		for offset in (-5,+5):
+			v += self.pixels[ x - 2, y + offset][i]
+			v += self.pixels[ x - 1, y + offset][i]
+			v += self.pixels[ x    , y + offset][i]
+			v += self.pixels[ x + 1, y + offset][i]
+			v += self.pixels[ x + 2, y + offset][i]
+
+		for offset in (-4,+4):
+			v += self.pixels[ x - 3, y + offset][i]
+			v += self.pixels[ x - 2, y + offset][i]
+			v += self.pixels[ x - 1, y + offset][i]
+			v += self.pixels[ x    , y + offset][i]
+			v += self.pixels[ x + 1, y + offset][i]
+			v += self.pixels[ x + 2, y + offset][i]
+			v += self.pixels[ x + 3, y + offset][i]
+
+		for offset in (-3,+3):
+			v += self.pixels[ x - 4, y - offset][i]
+			v += self.pixels[ x - 3, y - offset][i]
+			v += self.pixels[ x + 3, y - offset][i]
+			v += self.pixels[ x + 4, y - offset][i]
+
+		for offset in (-2,-1,0,+1,+2):
+			v += self.pixels[ x - 5, y - offset][i]
+			v += self.pixels[ x - 4, y - offset][i]
+			v += self.pixels[ x + 4, y - offset][i]
+			v += self.pixels[ x + 5, y - offset][i]
+
+		return int(v / 52)
 
 
 if __name__ == '__main__':
