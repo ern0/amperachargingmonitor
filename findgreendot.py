@@ -12,12 +12,12 @@ class FindGreenDot:
 
 	# image parameters
 
-	SOBEL_DIFF_LIGHTER = 170
-	SOBEL_DIFF_DARKER = 150
+	SOBEL_DIFF_LIGHTER = 130
+	SOBEL_DIFF_DARKER = 110
 
 	# spot parameters
 
-	MIN_SIZE_PX = 2
+	MIN_SIZE_PX = 3
 	MIN_FILL_RATIO = 0.6
 	MIN_FILL_PIX = 5
 	MIN_SQUARE_RATIO = 0.7
@@ -313,13 +313,15 @@ class FindGreenDot:
 	def hardUnionBoundingRects(self):
 
 		unions = {}
-		merged = {}
+		membership = {}
 
 		# find near or fully overlapping bounding boxes
 
 		for id1 in self.spotPixels:
 			for id2 in self.spotPixels:
+
 				if id2 <= id1: continue
+				# assert: id1 < id2
 
 				uniteVert = False
 
@@ -350,33 +352,44 @@ class FindGreenDot:
 				): uniteHoriz = True
 
 				if not (uniteHoriz and uniteVert): continue
+				
+				# checkpoint: put id1 and id2 into union
 
-				if id1 in merged: 
-					mid1 = merged[id1]
-				else: 
-					mid1 = id1
+				# head is id1 or its head
+				if id1 in membership:
+					headId = membership[id1]
+				else:
+					headId = id1
 
-				if id2 in merged: 
-					mid2 = merged[id2]
-				else: 
-					mid2 = id2
-					merged[id2] = id1
+				# create head if new
+				if headId not in unions:
+					unions[headId] = {}
 
-				if mid1 not in unions: unions[mid1] = {}
-				unions[mid1][mid2] = None
+				# eliminate id2 as union head, if it was,
+				# preserve members
+				if id2 in unions:
+					members = unions[id2]
+					del unions[id2]
+
+				# or just create a fake member list
+				else:
+					members = [ id2 ]
+
+				# add id2 members to head
+				for memberId in members:
+					unions[headId][memberId] = None
+					membership[memberId] = headId
 
 		# make unions
 
-		for id1 in unions:
-			for id2 in unions[id1]:
+		for headId in unions:
+			for memberId in unions[headId]:
 
-				self.spotTops[id1] = min(self.spotTops[id1],self.spotTops[id2])
-				self.spotBottoms[id1] = max(self.spotBottoms[id1],self.spotBottoms[id2])
-				self.spotLefts[id1] = min(self.spotLefts[id1],self.spotLefts[id2])
-				self.spotRights[id1] = max(self.spotRights[id1],self.spotRights[id2])
-				self.spotPixels[id1] += self.spotPixels[id2]
-
-				del self.spotPixels[id2]
+				self.spotTops[headId] = min(self.spotTops[headId],self.spotTops[memberId])
+				self.spotBottoms[headId] = max(self.spotBottoms[headId],self.spotBottoms[memberId])
+				self.spotLefts[headId] = min(self.spotLefts[headId],self.spotLefts[memberId])
+				self.spotRights[headId] = max(self.spotRights[headId],self.spotRights[memberId])
+				self.spotPixels[headId] += self.spotPixels[memberId]
 
 
 	def hardFindMatchingSpots(self):
@@ -474,8 +487,8 @@ class FindGreenDot:
 						if x > self.spotRights[spotId]: extra = True
 
 						if self.match[spotId]:
-							if extra: self.result[x,y] = (192,192,255)
-							else: self.result[x,y] = (0,0,255)
+							if extra: self.result[x,y] = (127,127,255)
+							else: self.result[x,y] = (63,63,127)
 
 						else:
 							if extra: self.result[x,y] = (127,127,127)
