@@ -556,16 +556,38 @@ class FindGreenDot:
 
 	def procImageTheEasyWay(self):
 
+		self.easyCheckSpotAndRing()
+		return self.easyCountMatches()
+
+
+	def easyCheckSpotAndRing(self):
+
+		# transform pixels to match flag
+
 		for y in range(11,self.height - 11):
 			for x in range(11,self.width - 11):
 
-				r1 = self.easyBlurPix(0,x,y)
-				g1 = self.easyBlurPix(1,x,y)
-				b1 = self.easyBlurPix(2,x,y)
+				# check center: is it green and light enough?
 
-				r2 = self.easyBlurCircle(0,x,y)
-				g2 = self.easyBlurCircle(1,x,y)
-				b2 = self.easyBlurCircle(2,x,y)
+				g1 = self.easyBlurSpot(1,x,y)
+				if g1 < 127: continue
+
+				r1 = self.easyBlurSpot(0,x,y)
+				if g1 <= r1: continue
+
+				b1 = self.easyBlurSpot(2,x,y)
+				if g1 <= b1: continue
+
+				# check ring: is it dark enough?
+
+				r2 = self.easyBlurRing(0,x,y)
+				if r2 > 30: continue
+
+				g2 = self.easyBlurRing(1,x,y)
+				if g2 > 30: continue
+
+				b2 = self.easyBlurRing(2,x,y)
+				if b2 > 30: continue
 
 				r = r1 - r2
 				if r < 0: r = 0
@@ -574,22 +596,12 @@ class FindGreenDot:
 				b = b1 - b2
 				if b < 0: b = 0
 
-				if g1 <= r1: (r,g,b) = (0,0,0)
-				if g1 <= b1: (r,g,b) = (0,0,0)
-				if g1 < 127: (r,g,b) = (0,0,0)
+				if g < 100: continue
 
-				if r2 > 100: (r,g,b) = (0,0,0)
-				if g2 > 100: (r,g,b) = (0,0,0)
-				if b2 > 100: (r,g,b) = (0,0,0)
-
-				if g < 100: (r,g,b) = (0,0,0)
-
-				self.result[x,y] = (r,g,b)
-
-		return 0
+				self.result[x,y] = (255,255,255)
 
 
-	def easyBlurPix(self,i,x,y):
+	def easyBlurSpot(self,i,x,y):
 
 		v = self.pixels[ x - 1, y - 1 ][i]
 		v += self.pixels[ x    , y - 1 ][i] * 2
@@ -604,7 +616,7 @@ class FindGreenDot:
 		return int(v / 16)
 
 
-	def easyBlurCircle(self,i,x,y):
+	def easyBlurRing(self,i,x,y):
 
 		v = 0
 
@@ -637,6 +649,19 @@ class FindGreenDot:
 			v += self.pixels[ x + 5, y - offset][i]
 
 		return int(v / 52)
+
+
+	def easyCountMatches(self):
+
+		found = 0
+
+		for y in range(11,self.height - 11):
+			for x in range(11,self.width - 11):
+
+				if self.result[x,y][1] != 255: continue
+				found += 1
+
+		return found
 
 
 if __name__ == '__main__':
