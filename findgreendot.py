@@ -72,7 +72,9 @@ class FindGreenDot:
 			print("MAX_SQUARE_DIFF = " + str(self.MAX_SQUARE_DIFF))
 
 		if self.WAY == "easy":
-			print("(parms: tbd)")
+			print("SPOT_GREEN_LEVEL = " + str(self.SPOT_GREEN_LEVEL))
+			print("RING_DARK_LEVEL = " + str(self.RING_DARK_LEVEL))
+			print("DIFF_GREEN_LEVEL = " + str(self.DIFF_GREEN_LEVEL))
 
 		print()
 
