@@ -1,0 +1,22 @@
+WAY = hard
+SOBEL_DIFF_LIGHTER = 170
+SOBEL_DIFF_DARKER = 150
+MIN_SIZE_PX = 2
+MIN_FILL_RATIO = 0.6
+MIN_FILL_PIX = 4
+MIN_SQUARE_RATIO = 0.7
+
+[X] afternoon-light-1.avi: light
+[X] afternoon-light-extra.avi: light
+[X] afternoon-none.avi: none
+[X] dark-blink.avi: blink
+[X] dark-light-1.avi: light
+[X] dark-light-2.avi: light
+[X] morning-blink-1.avi: blink
+[X] morning-blink-2.avi: blink
+[X] morning-blink-3.avi: blink
+[ ] morning-none-1.avi: blink
+[X] morning-none-2.avi: none
+[X] rainy-blink-1.avi: blink
+[X] sunshine-blink-1.avi: blink
+[X] sunshine-light-1.avi: light

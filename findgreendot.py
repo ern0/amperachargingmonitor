@@ -15,12 +15,12 @@ class FindGreenDot:
 
 	# hard way parameters
 
-	SOBEL_DIFF_LIGHTER = 130
-	SOBEL_DIFF_DARKER = 110
+	SOBEL_DIFF_LIGHTER = 170
+	SOBEL_DIFF_DARKER = 150
 
 	MIN_SIZE_PX = 3
 	MIN_FILL_RATIO = 0.6
-	MIN_FILL_PIX = 5
+	MIN_FILL_PIX = 4
 	MIN_SQUARE_RATIO = 0.7
 
 
@@ -53,6 +53,7 @@ class FindGreenDot:
 	def dumpParams(self):
 
 		print("WAY = " + str(self.WAY))
+		print()
 
 		if self.WAY == "hard":
 			print("SOBEL_DIFF_LIGHTER = " + str(self.SOBEL_DIFF_LIGHTER))
@@ -63,7 +64,7 @@ class FindGreenDot:
 			print("MIN_SQUARE_RATIO = " + str(self.MIN_SQUARE_RATIO))
 
 		if self.WAY == "easy":
-			pass
+			print("(parms: tbd)")
 
 		print()
 
@@ -111,7 +112,7 @@ class FindGreenDot:
 			frameRange = [ specifiedFrame, ]
 			self.debugMode = True
 
-		valueCount = [0,0]
+		self.valueCount = [0,0]
 		for i in frameRange:
 
 			self.extractFrame(fnam,i)
@@ -119,7 +120,7 @@ class FindGreenDot:
 			if found > 0: value = 1
 			else: value = 0
 
-			valueCount[value] += 1
+			self.valueCount[value] += 1
 
 			sys.stderr.write(
 				fnam
@@ -141,20 +142,20 @@ class FindGreenDot:
 
 		sys.stderr.write(
 			" dark="
-			+ str(valueCount[0])
+			+ str(self.valueCount[0])
 			+ " light="
-			+ str(valueCount[1])
+			+ str(self.valueCount[1])
 			+ "\n"
 		)
 		sys.stderr.flush()
 
-		if valueCount[0] == 0: return 1
-		if valueCount[1] == 0: return 0
+		if self.valueCount[0] == 0: return 1
+		if self.valueCount[1] == 0: return 0
 
-		total = valueCount[0] + valueCount[1]
-		if valueCount[1] > total * 0.8: return 1
+		total = self.valueCount[0] + self.valueCount[1]
+		if self.valueCount[1] > total * 0.8: return 1
 
-		if valueCount[0] > valueCount[1]: return 2
+		if self.valueCount[0] > self.valueCount[1]: return 2
 		return 0
 
 
@@ -574,7 +575,6 @@ class FindGreenDot:
 
 	def procImageTheEasyWay(self):
 
-		return 0
 		self.easyCheckSpotAndRing()
 		return self.easyCountMatches()
 

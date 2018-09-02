@@ -28,7 +28,14 @@ class Test:
 			else:
 				print("[ ]",end=" ")
 			print(entry.name,end=": ")
-			print(text)
+			print(text,end="")
+			print(
+				" (" +
+				"L=" + str(fgd.valueCount[1]) +
+				" " +
+				"D=" + str(fgd.valueCount[0]) +
+				")"
+			)
 
 
 	def fatal(self,msg):
