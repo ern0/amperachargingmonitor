@@ -13,15 +13,22 @@ class FindGreenDot:
 
 	WAY = "easy"
 
+	# easy way parameters
+
+	SPOT_GREEN_LEVEL = 127
+	RING_DARK_LEVEL = 30
+	DIFF_GREEN_LEVEL = 100
+
 	# hard way parameters
 
 	SOBEL_DIFF_LIGHTER = 170
 	SOBEL_DIFF_DARKER = 150
 
-	MIN_SIZE_PX = 3
+	MIN_SIZE_PX = 2
 	MIN_FILL_RATIO = 0.6
-	MIN_FILL_PIX = 4
-	MIN_SQUARE_RATIO = 0.7
+	MIN_FILL_PIX = 5
+	MAX_SQUARE_RATIO = 1.5
+	MAX_SQUARE_DIFF = 3
 
 
 	def main(self):
@@ -61,7 +68,8 @@ class FindGreenDot:
 			print("MIN_SIZE_PX = " + str(self.MIN_SIZE_PX))
 			print("MIN_FILL_RATIO = " + str(self.MIN_FILL_RATIO))
 			print("MIN_FILL_PIX = " + str(self.MIN_FILL_PIX))
-			print("MIN_SQUARE_RATIO = " + str(self.MIN_SQUARE_RATIO))
+			print("MAX_SQUARE_RATIO = " + str(self.MAX_SQUARE_RATIO))
+			print("MAX_SQUARE_DIFF = " + str(self.MAX_SQUARE_DIFF))
 
 		if self.WAY == "easy":
 			print("(parms: tbd)")
@@ -129,8 +137,9 @@ class FindGreenDot:
 				+ " "
 			)
 
-			for i in range(0,found):
+			for i in range(0,min(found,20)):
 				sys.stderr.write("#")
+			if found > 20: sys.stderr.write(".")
 
 			sys.stderr.write(
 				" "
@@ -488,12 +497,15 @@ class FindGreenDot:
 			# pre-calculate some values for debugging
 
 			fillRatio = self.spotPixels[spotId] / (w * h)
+
 			if correctedW == 0 or h == 0:
-				ratio = None
+				squareRatio = None
 				printableRatio = "n.a."
 			else:
-				ratio = max(correctedW,h) / min(correctedW,h)
-				printableRatio = str(round(ratio * 100) / 100) + ":1"
+				squareRatio = max(correctedW,h) / min(correctedW,h)
+				printableRatio = str(round(squareRatio * 100) / 100) + ":1"
+
+			squareDiff = max(correctedW,h) - min(correctedW,h)
 
 			# print some info when debugging
 
@@ -507,6 +519,8 @@ class FindGreenDot:
 				"(" +	str(correctedW) + "x" + str(h) + ")",
 				"ratio:",
 				printableRatio,
+				"diff:",
+				squareDiff,
 				"filled:",
 				str(self.spotPixels[spotId]) + "/" + str(w * h),
 				str(round(fillRatio * 10000) / 100) + "%",
@@ -515,7 +529,7 @@ class FindGreenDot:
 
 			# drop small ones (using corrected width for size)
 
-			if correctedW < self.MIN_SIZE_PX or h < self.MIN_SIZE_PX:
+			if correctedW < self.MIN_SIZE_PX and h < self.MIN_SIZE_PX:
 				if self.debugMode: print(" small_size",end="")
 				self.match[spotId] = False
 
@@ -534,10 +548,18 @@ class FindGreenDot:
 
 			# drop non-square-ish shapes
 
-			if ratio is not None:
-				if ratio < self.MIN_SQUARE_RATIO:
-					if self.debugMode: print(" not_square",end="")
-					self.match[spotId] = False
+			isSquare = 0
+			
+			if squareRatio is not None:
+				if squareRatio <= self.MAX_SQUARE_RATIO: 
+					isSquare += 1
+			
+			if squareDiff <= self.MAX_SQUARE_DIFF:
+				isSquare += 1
+
+			if isSquare == 0:
+				if self.debugMode: print(" not_square",end="")
+				self.match[spotId] = False
 
 			# checkpoint, report if no matching failed
 
@@ -589,7 +611,7 @@ class FindGreenDot:
 				# check center: is it green and light enough?
 
 				g1 = self.easyBlurSpot(1,x,y)
-				if g1 < 127: continue
+				if g1 < self.SPOT_GREEN_LEVEL: continue
 
 				r1 = self.easyBlurSpot(0,x,y)
 				if g1 <= r1: continue
@@ -600,13 +622,13 @@ class FindGreenDot:
 				# check ring: is it dark enough?
 
 				r2 = self.easyBlurRing(0,x,y)
-				if r2 > 30: continue
+				if r2 > self.RING_DARK_LEVEL: continue
 
 				g2 = self.easyBlurRing(1,x,y)
-				if g2 > 30: continue
+				if g2 > self.RING_DARK_LEVEL: continue
 
 				b2 = self.easyBlurRing(2,x,y)
-				if b2 > 30: continue
+				if b2 > self.RING_DARK_LEVEL: continue
 
 				r = r1 - r2
 				if r < 0: r = 0
@@ -615,7 +637,7 @@ class FindGreenDot:
 				b = b1 - b2
 				if b < 0: b = 0
 
-				if g < 100: continue
+				if g < self.DIFF_GREEN_LEVEL: continue
 
 				self.result[x,y] = (255,255,255)
 
