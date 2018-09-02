@@ -50,6 +50,24 @@ class FindGreenDot:
 		os._exit(1)
 
 
+	def dumpParams(self):
+
+		print("WAY = " + str(self.WAY))
+
+		if self.WAY == "hard":
+			print("SOBEL_DIFF_LIGHTER = " + str(self.SOBEL_DIFF_LIGHTER))
+			print("SOBEL_DIFF_DARKER = " + str(self.SOBEL_DIFF_DARKER))
+			print("MIN_SIZE_PX = " + str(self.MIN_SIZE_PX))
+			print("MIN_FILL_RATIO = " + str(self.MIN_FILL_RATIO))
+			print("MIN_FILL_PIX = " + str(self.MIN_FILL_PIX))
+			print("MIN_SQUARE_RATIO = " + str(self.MIN_SQUARE_RATIO))
+
+		if self.WAY == "easy":
+			pass
+
+		print()
+
+
 	def checkFileExistence(self,fnam):
 
 		if not os.path.isfile(fnam):
@@ -556,6 +574,7 @@ class FindGreenDot:
 
 	def procImageTheEasyWay(self):
 
+		return 0
 		self.easyCheckSpotAndRing()
 		return self.easyCountMatches()
 

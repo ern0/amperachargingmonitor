@@ -13,14 +13,7 @@ class Test:
 	def main(self):
 
 		fgd = findgreendot.FindGreenDot()
-
-		print("SOBEL_DIFF_LIGHTER = " + str(fgd.SOBEL_DIFF_LIGHTER))
-		print("SOBEL_DIFF_DARKER = " + str(fgd.SOBEL_DIFF_DARKER))
-		print("MIN_SIZE_PX = " + str(fgd.MIN_SIZE_PX))
-		print("MIN_FILL_RATIO = " + str(fgd.MIN_FILL_RATIO))
-		print("MIN_FILL_PIX = " + str(fgd.MIN_FILL_PIX))
-		print("MIN_SQUARE_RATIO = " + str(fgd.MIN_SQUARE_RATIO))
-		print()
+		fgd.dumpParams()
 
 		for entry in os.scandir("sample"):
 
@@ -33,7 +26,7 @@ class Test:
 			if text in entry.name:
 				print("[X]",end=" ")
 			else:
-				print("[X]",end=" ")
+				print("[ ]",end=" ")
 			print(entry.name,end=": ")
 			print(text)
 
