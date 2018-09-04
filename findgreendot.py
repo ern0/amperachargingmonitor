@@ -13,6 +13,12 @@ class FindGreenDot:
 
 	WAY = "easy"
 
+	# common parameters
+	CUT_TOP = 100
+	CUT_LEFT = 100
+	CUT_BOTTOM = 200
+	CUT_RIGHT = 200
+
 	# easy way parameters
 
 	SPOT_GREEN_LEVEL = 127
