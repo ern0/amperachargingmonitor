@@ -11,13 +11,14 @@ class FindGreenDot:
 
 	# processing method
 
-	WAY = "easy"
+	WAY = "hard"
 
 	# common parameters
-	CUT_TOP = 100
-	CUT_LEFT = 100
-	CUT_BOTTOM = 200
-	CUT_RIGHT = 200
+
+	CROP_TOP = 50
+	CROP_LEFT = 50
+	CROP_BOTTOM = 50
+	CROP_RIGHT = 50
 
 	# easy way parameters
 
@@ -195,6 +196,19 @@ class FindGreenDot:
 
 		source = Image.open(self.mkTmpImgPath(fnam))
 		(self.width,self.height) = source.size
+
+		if (
+			self.width - self.CROP_LEFT - self.CROP_RIGHT < 32
+			or
+			self.height - self.CROP_TOP - self.CROP_BOTTOM < 32
+		):
+			self.fatal(
+				"image is too small: "
+				+ str(self.width)
+				+ " x "
+				+ str(self.height)
+			)
+
 		self.pixels = source.load()
 
 		target = Image.new(
@@ -210,7 +224,26 @@ class FindGreenDot:
 			for y in range(0,self.height):
 				self.result[self.width,y] = (0,255,0)
 				for x in range(0,self.width):
-					self.result[x + self.width + 1, y] = self.pixels[x,y]
+
+					outside = False
+					if x < self.CROP_LEFT: outside = True
+					elif x > self.width - self.CROP_RIGHT: outside = True
+					elif y < self.CROP_TOP: outside = True
+					elif y > self.height - self.CROP_BOTTOM: outside = True
+
+					if outside:
+						self.result[x + self.width + 1, y] = (
+							int(self.pixels[x,y][0] / 2),
+							int(self.pixels[x,y][1] / 2),
+							int(self.pixels[x,y][2] / 2)
+						)
+						if int(x / 8) % 2 ^ int(y / 8) % 2:
+							self.result[x,y] = (63,63,63)
+						else:
+							self.result[x,y] = (15,15,15)
+
+					else: # inside
+						self.result[x + self.width + 1, y] = self.pixels[x,y]
 
 		# perform the job
 
@@ -261,8 +294,8 @@ class FindGreenDot:
 
 		# foreach image-pixel
 
-		for y in range(1,self.height - 1):
-			for x in range(1,self.width - 1):
+		for y in range(1 + self.CROP_TOP,self.height - 1 - self.CROP_BOTTOM):
+			for x in range(1 + self.CROP_LEFT,self.width - 1 - self.CROP_RIGHT):
 
 				# copy 3x3 region (known issue: not used in this version)
 
@@ -306,9 +339,9 @@ class FindGreenDot:
 
 	def hardFillGaps(self):
 
-		for y in range(1,self.height - 1):
+		for y in range(1 + self.CROP_TOP,self.height - 1 - self.CROP_BOTTOM):
 			fill = self.FILL_OFF
-			for x in range(1,self.width - 1):
+			for x in range(1 + self.CROP_LEFT,self.width - 1 - self.CROP_RIGHT):
 				pix = self.result[x,y]
 
 				if fill == self.FILL_OFF and pix[2] == self.CHANGE_LIGHTER:
@@ -336,8 +369,8 @@ class FindGreenDot:
 		# initial spot ID
 		nextSpotId = 1
 
-		for y in range(2,self.height - 2):
-			for x in range(2,self.width - 2):
+		for y in range(2 + self.CROP_TOP,self.height - 2 - self.CROP_BOTTOM):
+			for x in range(2 + self.CROP_LEFT,self.width - 2 - self.CROP_RIGHT):
 				if self.result[x,y][2] == self.CHANGE_SMALL: continue
 
 				# add current diff-pixel to an existing spot, or create a new one
@@ -422,13 +455,13 @@ class FindGreenDot:
 
 				if (
 					self.spotTops[id1]
-					<= self.spotTops[id2] - 2 <= 
+					<= self.spotTops[id2] - 2 <=
 					self.spotBottoms[id1]
 				): uniteVert = True
 
 				if (
 					self.spotTops[id1]
-					<= self.spotBottoms[id2] + 2 <= 
+					<= self.spotBottoms[id2] + 2 <=
 					self.spotBottoms[id1]
 				): uniteVert = True
 
@@ -436,18 +469,18 @@ class FindGreenDot:
 
 				if (
 					self.spotLefts[id1]
-					<= self.spotLefts[id2] - 2 <= 
+					<= self.spotLefts[id2] - 2 <=
 					self.spotRights[id1]
 				): uniteHoriz = True
 
 				if (
 					self.spotLefts[id1]
-					<= self.spotRights[id2] + 2 <= 
+					<= self.spotRights[id2] + 2 <=
 					self.spotRights[id1]
 				): uniteHoriz = True
 
 				if not (uniteHoriz and uniteVert): continue
-				
+
 				# checkpoint: put id1 and id2 into union
 
 				# head is id1 or its head
@@ -557,11 +590,11 @@ class FindGreenDot:
 			# drop non-square-ish shapes
 
 			isSquare = 0
-			
+
 			if squareRatio is not None:
-				if squareRatio <= self.MAX_SQUARE_RATIO: 
+				if squareRatio <= self.MAX_SQUARE_RATIO:
 					isSquare += 1
-			
+
 			if squareDiff <= self.MAX_SQUARE_DIFF:
 				isSquare += 1
 
@@ -613,8 +646,8 @@ class FindGreenDot:
 
 		# transform pixels to match flag
 
-		for y in range(11,self.height - 11):
-			for x in range(11,self.width - 11):
+		for y in range(11 + self.CROP_TOP,self.height - 11 - self.CROP_BOTTOM):
+			for x in range(11 + self.CROP_LEFT,self.width - 11 - self.CROP_RIGHT):
 
 				# check center: is it green and light enough?
 
@@ -704,8 +737,8 @@ class FindGreenDot:
 
 		found = 0
 
-		for y in range(11,self.height - 11):
-			for x in range(11,self.width - 11):
+		for y in range(11 + self.CROP_TOP,self.height - 11 - self.CROP_BOTTOM):
+			for x in range(11 + self.CROP_LEFT,self.width - 11 - self.CROP_RIGHT):
 
 				if self.result[x,y][1] != 255: continue
 				found += 1
