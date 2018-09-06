@@ -11,14 +11,14 @@ class FindGreenDot:
 
 	# processing method
 
-	WAY = "hard"
+	WAY = "easy"
 
 	# common parameters
 
-	CROP_TOP = 50
-	CROP_LEFT = 50
-	CROP_BOTTOM = 50
-	CROP_RIGHT = 50
+	CROP_TOP = 100
+	CROP_LEFT = 100
+	CROP_BOTTOM = 10
+	CROP_RIGHT = 40
 
 	# easy way parameters
 
@@ -68,6 +68,11 @@ class FindGreenDot:
 
 		print("WAY = " + str(self.WAY))
 		print()
+
+		print("CROP_TOP = " + str(self.CROP_TOP))
+		print("CROP_LEFT = " + str(self.CROP_LEFT))
+		print("CROP_BOTTOM = " + str(self.CROP_BOTTOM))
+		print("CROP_RIGHT = " + str(self.CROP_RIGHT))
 
 		if self.WAY == "hard":
 			print("SOBEL_DIFF_LIGHTER = " + str(self.SOBEL_DIFF_LIGHTER))
