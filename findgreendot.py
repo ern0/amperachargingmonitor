@@ -11,7 +11,7 @@ class FindGreenDot:
 
 	# processing method
 
-	WAY = "hard"
+	WAY = "easy"
 
 	# common parameters
 
@@ -22,6 +22,7 @@ class FindGreenDot:
 
 	# easy way parameters
 
+	GREEN_DIFF_SPLIT = 0.6
 	SPOT_GREEN_LEVEL = 127
 	RING_DARK_LEVEL = 30
 
@@ -298,6 +299,7 @@ class FindGreenDot:
 		if diff < 50:	diff = 50
 
 		self.sobelChangeLimit = int(bottomFound + ( diff * self.SOBEL_DIFF_SPLIT ))
+		self.simpleChangeLimit = int(bottomFound + ( diff * self.GREEN_DIFF_SPLIT ))
 
 		#print("LIGHTNESS:",bottomFound,topFound,self.sobelChangeLimit)
 
@@ -473,7 +475,6 @@ class FindGreenDot:
 			if spotCoords[1] > self.spotBottoms[spotId]: self.spotBottoms[spotId] = spotCoords[1]
 			if spotCoords[0] < self.spotLefts[spotId]: self.spotLefts[spotId] = spotCoords[0]
 			if spotCoords[0] > self.spotRights[spotId]: self.spotRights[spotId] = spotCoords[0]
-
 
 
 	def hardUnionBoundingRects(self):
@@ -717,7 +718,7 @@ class FindGreenDot:
 				b = b1 - b2
 				if b < 0: b = 0
 
-				if g < self.DIFF_GREEN_LEVEL: continue
+				if g < self.simpleChangeLimit: continue
 
 				self.result[x,y] = (255,255,255)
 
