@@ -11,7 +11,7 @@ class FindGreenDot:
 
 	# processing method
 
-	WAY = "easy"
+	WAY = "hard"
 
 	# common parameters
 
@@ -24,13 +24,10 @@ class FindGreenDot:
 
 	SPOT_GREEN_LEVEL = 127
 	RING_DARK_LEVEL = 30
-	DIFF_GREEN_LEVEL = 100
 
 	# hard way parameters
 
-	SOBEL_DIFF_LIGHTER = 170
-	SOBEL_DIFF_DARKER = 150
-
+	SOBEL_DIFF_SPLIT = 0.6
 	MIN_SIZE_PX = 2
 	MIN_FILL_RATIO = 0.6
 	MIN_FILL_PIX = 5
@@ -75,8 +72,7 @@ class FindGreenDot:
 		print("CROP_RIGHT = " + str(self.CROP_RIGHT))
 
 		if self.WAY == "hard":
-			print("SOBEL_DIFF_LIGHTER = " + str(self.SOBEL_DIFF_LIGHTER))
-			print("SOBEL_DIFF_DARKER = " + str(self.SOBEL_DIFF_DARKER))
+			print("SOBEL_DIFF_SPLIT = " + str(self.SOBEL_DIFF_SPLIT))
 			print("MIN_SIZE_PX = " + str(self.MIN_SIZE_PX))
 			print("MIN_FILL_RATIO = " + str(self.MIN_FILL_RATIO))
 			print("MIN_FILL_PIX = " + str(self.MIN_FILL_PIX))
@@ -86,7 +82,6 @@ class FindGreenDot:
 		if self.WAY == "easy":
 			print("SPOT_GREEN_LEVEL = " + str(self.SPOT_GREEN_LEVEL))
 			print("RING_DARK_LEVEL = " + str(self.RING_DARK_LEVEL))
-			print("DIFF_GREEN_LEVEL = " + str(self.DIFF_GREEN_LEVEL))
 
 		print()
 
@@ -264,8 +259,52 @@ class FindGreenDot:
 		return found
 
 
+	def findLightnessValues(self):
+		# notice: using full image, no crop applied
+
+		occurrences = [0] * 256
+
+		for y in range(1,self.height - 1):
+			for x in range(1,self.width - 1):
+				pix = self.pixels[x,y]
+
+				g = pix[1]
+				occurrences[g] += 1
+
+		numberOfPixels = self.height * self.width
+
+		bottomLimit = numberOfPixels * 0.01
+		topLimit = numberOfPixels * 0.99
+
+		bottomFound = None
+		topFound = None
+
+		counter = 0
+		for lightness in range(0,256):
+
+			if bottomFound is None and counter >= bottomLimit:
+				bottomFound = lightness
+
+			if topFound is None and counter >= topLimit:
+				topFound = lightness
+				break
+
+			counter += occurrences[lightness]
+
+		if bottomFound is None: bottomFound = 0
+		if topFound is None: topFound = 255
+
+		diff = topFound - bottomFound
+		if diff < 50:	diff = 50
+
+		self.sobelChangeLimit = int(bottomFound + ( diff * self.SOBEL_DIFF_SPLIT ))
+
+		#print("LIGHTNESS:",bottomFound,topFound,self.sobelChangeLimit)
+
+
 	def procImageTheHardWay(self):
 
+		self.findLightnessValues()
 		self.hardSetEnums()
 		self.hardFindEdges()
 		self.hardFillGaps()
@@ -327,19 +366,13 @@ class FindGreenDot:
 
 				# mark difference types (lighten, darken, unchanged) with color codes
 
-				if diff > 0:
-
-					if abs(diff) > self.SOBEL_DIFF_LIGHTER:
+				if abs(diff) > self.sobelChangeLimit:
+					if diff > 0:
 						self.result[x,y] = (1,255,self.CHANGE_LIGHTER)
 					else:
-						self.result[x,y] = (0,0,self.CHANGE_SMALL)
-
-				else:
-
-					if abs(diff) > self.SOBEL_DIFF_DARKER:
 						self.result[x,y] = (255,1,self.CHANGE_DARKER)
-					else:
-						self.result[x,y] = (0,0,self.CHANGE_SMALL)
+				else:
+					self.result[x,y] = (0,0,self.CHANGE_SMALL)
 
 
 	def hardFillGaps(self):
@@ -643,6 +676,7 @@ class FindGreenDot:
 
 	def procImageTheEasyWay(self):
 
+		self.findLightnessValues()
 		self.easyCheckSpotAndRing()
 		return self.easyCountMatches()
 
