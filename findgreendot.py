@@ -22,9 +22,9 @@ class FindGreenDot:
 
 	# easy way parameters
 
-	GREEN_DIFF_SPLIT = 0.6
-	SPOT_GREEN_LEVEL = 127
-	RING_DARK_LEVEL = 30
+	GREEN_DIFF_SPLIT = 0.4
+	SPOT_GREEN_LEVEL = 0.6
+	RING_DARK_LEVEL = 0.3
 
 	# hard way parameters
 
@@ -300,8 +300,8 @@ class FindGreenDot:
 
 		self.sobelChangeLimit = int(bottomFound + ( diff * self.SOBEL_DIFF_SPLIT ))
 		self.simpleChangeLimit = int(bottomFound + ( diff * self.GREEN_DIFF_SPLIT ))
-
-		#print("LIGHTNESS:",bottomFound,topFound,self.sobelChangeLimit)
+		self.simpleGreenLimit = int(bottomFound + ( diff * self.SPOT_GREEN_LEVEL ))
+		self.simpleDarkLimit = int(bottomFound + ( diff * self.RING_DARK_LEVEL ))
 
 
 	def procImageTheHardWay(self):
@@ -692,7 +692,7 @@ class FindGreenDot:
 				# check center: is it green and light enough?
 
 				g1 = self.easyBlurSpot(1,x,y)
-				if g1 < self.SPOT_GREEN_LEVEL: continue
+				if g1 < self.simpleGreenLimit: continue
 
 				r1 = self.easyBlurSpot(0,x,y)
 				if g1 <= r1: continue
@@ -703,13 +703,10 @@ class FindGreenDot:
 				# check ring: is it dark enough?
 
 				r2 = self.easyBlurRing(0,x,y)
-				if r2 > self.RING_DARK_LEVEL: continue
-
 				g2 = self.easyBlurRing(1,x,y)
-				if g2 > self.RING_DARK_LEVEL: continue
-
 				b2 = self.easyBlurRing(2,x,y)
-				if b2 > self.RING_DARK_LEVEL: continue
+
+				if g2 > self.simpleDarkLimit: continue
 
 				r = r1 - r2
 				if r < 0: r = 0
@@ -718,6 +715,7 @@ class FindGreenDot:
 				b = b1 - b2
 				if b < 0: b = 0
 
+				#print(g,self.simpleChangeLimit)
 				if g < self.simpleChangeLimit: continue
 
 				self.result[x,y] = (255,255,255)

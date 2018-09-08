@@ -4,20 +4,20 @@ CROP_TOP = 100
 CROP_LEFT = 100
 CROP_BOTTOM = 10
 CROP_RIGHT = 40
-SPOT_GREEN_LEVEL = 127
-RING_DARK_LEVEL = 30
+SPOT_GREEN_LEVEL = 0.6
+RING_DARK_LEVEL = 0.3
 
 [X] afternoon-light-1.avi: light (L=125 D=0)
-[ ] afternoon-light-extra.avi: none (L=0 D=125)
+[X] afternoon-light-extra.avi: light (L=125 D=0)
 [X] afternoon-none.avi: none (L=0 D=125)
 [X] dark-blink.avi: blink (L=9 D=116)
 [X] dark-light-1.avi: light (L=125 D=0)
 [X] dark-light-2.avi: light (L=125 D=0)
-[X] morning-blink-1.avi: blink (L=4 D=121)
+[X] morning-blink-1.avi: blink (L=5 D=120)
 [X] morning-blink-2.avi: blink (L=1 D=124)
-[X] morning-blink-3.avi: blink (L=5 D=120)
+[X] morning-blink-3.avi: blink (L=6 D=119)
 [X] morning-none-1.avi: none (L=0 D=125)
 [X] morning-none-2.avi: none (L=0 D=125)
-[X] rainy-blink-1.avi: blink (L=2 D=123)
-[X] sunshine-blink-1.avi: blink (L=8 D=117)
-[ ] sunshine-light-1.avi: none (L=0 D=125)
+[X] rainy-blink-1.avi: blink (L=6 D=119)
+[X] sunshine-blink-1.avi: blink (L=9 D=116)
+[X] sunshine-light-1.avi: light (L=125 D=0)
