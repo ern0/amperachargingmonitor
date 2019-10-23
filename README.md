@@ -1,6 +1,6 @@
 # Ampera Charging Monitor
 
-*Visual monitoring of EV charging (Opel Ampera), using a Raspberry Pi with a webcam and an old Android phone*
+*Visual monitoring of EV charging (Opel Ampera / Chevrolet VOlt), using a Raspberry Pi with a webcam and an old Android phone*
 
 ## Purpose
 
@@ -20,7 +20,7 @@ What I want is simple: check the status of charging remotely.
 
 ## The solution
 
-I have no ODB2 interface (yet), and AFAIK it works only when the car is tudned on. Anyway, if it works when the car is turned off, I don't really want to use it, I think, it's a huge secutiry hole.
+I have no ODB2 interface (yet), and AFAIK it works only when the car is turned on. Anyway, if it works when the car is turned off, I don't really want to use it, I think, it's a huge secutiry hole.
 
 Fortunately, there is a led indicator in the middle of the front window. After plugging the charging cord, it turns to yellow for a while, and if there's no error, it turns constant green during charging, then flashing green, when the car is fully charged.
 
@@ -31,7 +31,7 @@ The car led blinks quickly, it's not enough to make a still image and analyze it
 
 ## Artifical constraints
 
-As mentioned, it's an educational project. I hope it's useful for ones interested in image processing basics, but first of all, it was a good lesson for myself. I was familiar with image processing basics, but I've never used this knowledge "on the field".
+As mentioned, it's an educational project. I hope it's useful for ones interested in image processing basics, but first of all, it was a good lesson for myself. I was familiar with image processing theory, but I've never used this knowledge "on the field".
 
 So I laid down some general rules for the architecture:
 
@@ -62,6 +62,6 @@ So I laid down some general rules for the architecture:
 ### Webcam
 
 You can use a real webcam, but the cheapest solution s to use some old Android device for it:
-- Downloar IP Cam app: https://play.google.com/store/apps/details?id=com.pas.webcam
+- Download IP Cam app: https://play.google.com/store/apps/details?id=com.pas.webcam
 - In the app's settings, set up autostart
 - Configure your DHCP server (usually, it's your router) to assign static IP address to the device.

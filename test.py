@@ -15,9 +15,9 @@ class Test:
 		fgd = findgreendot.FindGreenDot()
 		fgd.dumpParams()
 
-		for entry in os.scandir("sample"):
+		for entry in os.scandir("test-sample"):
 
-			result = fgd.procFrames("sample/" + entry.name)
+			result = fgd.procFrames("test-sample/" + entry.name)
 			text = "wtf"
 			if result == 0: text = "none"
 			if result == 1: text = "light"

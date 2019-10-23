@@ -11,7 +11,7 @@ class FindGreenDot:
 
 	# processing method
 
-	WAY = "easy"
+	WAY = "hard"
 
 	# common parameters
 
@@ -38,8 +38,13 @@ class FindGreenDot:
 
 	def main(self):
 
-		try: fnam = sys.argv[1]
-		except: self.fatal("filename must be specified")
+		try: 
+			fnam = sys.argv[1]
+		except: 
+			self.fatal(
+				"filename must be specified \n"
+				"  second arg is frame number (optional, ALL if not specified)"
+			)
 		self.checkFileExistence(fnam)
 
 		try: specifiedFrame = sys.argv[2]
