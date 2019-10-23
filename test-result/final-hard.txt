@@ -1,0 +1,27 @@
+WAY = hard
+
+CROP_TOP = 100
+CROP_LEFT = 100
+CROP_BOTTOM = 10
+CROP_RIGHT = 40
+SOBEL_DIFF_SPLIT = 0.6
+MIN_SIZE_PX = 2
+MIN_FILL_RATIO = 0.6
+MIN_FILL_PIX = 5
+MAX_SQUARE_RATIO = 1.5
+MAX_SQUARE_DIFF = 3
+
+[X] afternoon-light-1.avi: light (L=125 D=0)
+[X] afternoon-light-extra.avi: light (L=125 D=0)
+[X] afternoon-none.avi: none (L=0 D=125)
+[X] dark-blink.avi: blink (L=12 D=113)
+[X] dark-light-1.avi: light (L=125 D=0)
+[X] dark-light-2.avi: light (L=125 D=0)
+[X] morning-blink-1.avi: blink (L=6 D=119)
+[X] morning-blink-2.avi: blink (L=4 D=121)
+[X] morning-blink-3.avi: blink (L=7 D=118)
+[X] morning-none-1.avi: none (L=0 D=125)
+[X] morning-none-2.avi: none (L=0 D=125)
+[X] rainy-blink-1.avi: blink (L=10 D=115)
+[X] sunshine-blink-1.avi: blink (L=8 D=117)
+[X] sunshine-light-1.avi: light (L=125 D=0)
