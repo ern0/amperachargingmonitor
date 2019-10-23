@@ -15,10 +15,10 @@ class FindGreenDot:
 
 	# common parameters
 
-	CROP_TOP = 100
-	CROP_LEFT = 100
-	CROP_BOTTOM = 10
-	CROP_RIGHT = 40
+	CROP_TOP = 50
+	CROP_LEFT = 120
+	CROP_BOTTOM = 90
+	CROP_RIGHT = 50
 
 	# easy way parameters
 
@@ -308,6 +308,14 @@ class FindGreenDot:
 		self.simpleGreenLimit = int(bottomFound + ( diff * self.SPOT_GREEN_LEVEL ))
 		self.simpleDarkLimit = int(bottomFound + ( diff * self.RING_DARK_LEVEL ))
 
+		if False:
+			print(
+				self.sobelChangeLimit
+				,self.simpleChangeLimit
+				,self.simpleGreenLimit
+				,self.simpleDarkLimit
+			)
+			quit()
 
 	def procImageTheHardWay(self):
 
