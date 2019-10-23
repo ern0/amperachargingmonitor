@@ -15,10 +15,10 @@ class FindGreenDot:
 
 	# common parameters
 
-	CROP_TOP = 100
-	CROP_LEFT = 100
-	CROP_BOTTOM = 10
-	CROP_RIGHT = 40
+	CROP_TOP = 60
+	CROP_LEFT = 140
+	CROP_BOTTOM = 90
+	CROP_RIGHT = 50
 
 	# easy way parameters
 
