@@ -4,7 +4,7 @@ dir=/mnt/ram
 
 # Capture a short video
 
-rm -f $dir/capture.avi
+rm -rf $dir/capture.avi
 
 ffmpeg \
         -f v4l2 \
