@@ -9,7 +9,7 @@ rm -f $dir/capture.avi
 ffmpeg \
         -f v4l2 \
         -r 25 \
-        -t 0.2 \
+        -t 5 \
         -s 320x200 \
         -i /dev/video0 \
         $dir/capture.avi
