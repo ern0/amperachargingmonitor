@@ -23,7 +23,8 @@ do
 
   ./findgreendot.py $dir/capture.avi > $t
 
-  if [ -s $t ] then
+  if [ -s $t ] 
+  then
     mv $t $f
   fi
 
