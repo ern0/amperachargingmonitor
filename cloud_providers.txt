@@ -1,6 +1,8 @@
-https://thingspeak.com
-https://iotplotter.com
+https://kaaproject.org - no free
+https://thingspeak.com - FAIL
+
+https://iotplotter.com...
+
 https://thingsboard.io
-https://kaaproject.org
 https://ubidots.com
 https://iotguru.live/
