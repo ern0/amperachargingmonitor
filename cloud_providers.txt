@@ -1,0 +1,6 @@
+https://thingspeak.com
+https://iotplotter.com
+https://thingsboard.io
+https://kaaproject.org
+https://ubidots.com
+https://iotguru.live/
