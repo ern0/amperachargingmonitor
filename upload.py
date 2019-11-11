@@ -109,7 +109,14 @@ class Upload:
 		sys.stderr.write("done\n")
 		sys.stderr.flush()
 
-		os.rename(self.file,self.backup)
+		bplan = False
+		try: os.rename(self.file,self.backup)
+		except OSError: bplan = True
+
+		if bplan:
+			with open(self.backup,"w") as f: f.write(value)
+			os.unlink(self.file)
+
 		time.sleep(1)
 
 
