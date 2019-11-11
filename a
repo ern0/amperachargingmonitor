@@ -1,0 +1,10 @@
+#!/bin/bash
+clear
+
+dir=/media/storage/data/garage/
+
+./upload.py \
+	$dir/proc \
+	$dir/done \
+	`cat apikey.txt` \
+	`cat feedid.txt`

@@ -6,14 +6,18 @@ import os
 import glob
 import time
 import urllib.request
+import urllib.parse
+import json
 
 
 class Upload:
 
 	def main(self):
 
-		self.dataDir = sys.argv[1]
-		self.apiKey = sys.argv[2]
+		self.procDir = sys.argv[1]
+		self.doneDir = sys.argv[2]
+		self.apiKey = sys.argv[3]
+		self.feedId = sys.argv[4]
 
 		last = ""
 		idleReported = False
@@ -21,7 +25,7 @@ class Upload:
 		while True:
 
 			self.file = None
-			pattern = self.dataDir + "/*.txt"
+			pattern = self.procDir + "/*.txt"
 			for self.file in glob.glob(pattern): break
 
 			if self.file is None:
@@ -46,26 +50,45 @@ class Upload:
 
 	def procFile(self):
 
-		stamp = os.path.basename(self.file)
-		stamp = stamp.replace(".txt","")
+		fnam = os.path.basename(self.file)
+		self.backup = self.doneDir + "/" + fnam
+		stamp = fnam.replace(".txt","")
+
+		pattern = '%Y-%m-%dT%H:%M:%S'
+		epoch = int(time.mktime(time.strptime(stamp,pattern)))
 
 		with open(self.file) as f: 
 			value = f.read().strip()
 
-		url = "https://api.thingspeak.com/update.json"
-		url += "?api_key=" + self.apiKey
-		url += "&created_at=" + stamp
-		url += "&status=" + value
-
-		print("request: " + stamp)
+		sys.stderr.write(fnam + "... ")
+		sys.stderr.flush()
 
 		attempt = 0
 		while True:
 			attempt += 1
 
+			url = "http://iotplotter.com/api/v2/feed/" 
+			url += self.feedId
+					
+			headers = { "api-key": self.apiKey }
+
+			data = {
+				"data": {
+					"charging": [{
+						"value": int(value)
+						,"epoch": epoch
+					}]
+				}
+			}
+			data = json.dumps(data).encode("utf-8")
+
 			try:
-				response = urllib.request.urlopen(url)
-				data = response.read().decode("utf-8").strip()
+				req = urllib.request.Request(
+					url
+					,headers=headers
+					,data=data
+				)
+				response = urllib.request.urlopen(req)
 
 			except urllib.error.HTTPError as e:
 				if e.getcode() == 400:
@@ -77,14 +100,17 @@ class Upload:
 				time.sleep(1)
 				continue
 
-			if data[0] == "0": 
+			if str(response.getcode()) != "200":
 				print("fatal error: update failed")
 				quit(1)
 
 			break
 
-		os.unlink(self.file)
-		time.sleep(15)
+		sys.stderr.write("done\n")
+		sys.stderr.flush()
+
+		os.rename(self.file,self.backup)
+		time.sleep(1)
 
 
 if __name__ == '__main__':
