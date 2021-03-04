@@ -15,7 +15,7 @@ ffmpeg \
 
 
 # Analyze the video and print result on stdout:
-#  0 - none
+#  0 - nones
 #  1 - light
 #  2 - blink
 
