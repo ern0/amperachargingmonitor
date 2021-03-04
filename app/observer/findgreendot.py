@@ -194,7 +194,6 @@ class FindGreenDot:
 			" -i " + fnam +
 			" -vf select=\"eq(n\\," + str(frameNo) + ")\""
 			" -vsync 0"
-			" -y"
 			" " + self.mkTmpImgPath(fnam)
 		).read()
 
