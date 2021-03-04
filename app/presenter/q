@@ -1,0 +1,4 @@
+#!/bin/bash
+clear
+
+miniterm.py --exit-char 3 `./detectdevice.sh`

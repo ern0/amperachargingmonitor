@@ -8,4 +8,6 @@ fi
 
 ./reportlastfiles.py \
 	$DIR \
-	`./detectdevice.sh`
+	`./detectdevice.sh` \
+	1.4 \
+	1

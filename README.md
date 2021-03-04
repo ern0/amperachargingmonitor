@@ -1,6 +1,6 @@
 # Ampera Charging Monitor
 
-*Visual monitoring of EV charging (Opel Ampera / Chevrolet VOlt), using a Raspberry Pi with a webcam and an old Android phone*
+*Visual monitoring of EV charging (Opel Ampera / Chevrolet Volt), using a Raspberry Pi with a webcam and an old Android phone*
 
 ## Purpose
 

@@ -1,0 +1,5 @@
+sudo -u kiosk tmux new -d -s observer \
+        /home/kiosk/amperachargingmonitor/app/observer/forever.sh
+
+sudo -u kiosk tmux new -d -s presenter \
+        /home/kiosk/amperachargingmonitor/app/presenter/runme.sh
