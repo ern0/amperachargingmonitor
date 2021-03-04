@@ -10,4 +10,4 @@ fi
 	$DIR \
 	`./detectdevice.sh` \
 	1.4 \
-	1
+	0
